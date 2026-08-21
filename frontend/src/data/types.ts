@@ -2,7 +2,7 @@ export type TimelineStatus = 'Immediate' | 'Overdue' | 'Due Soon' | 'On Track' |
 export type CompletionStatus = 'Not Started' | 'In Progress' | 'Completed' | 'Delayed';
 
 export interface Activity {
-  id: string;               // Maps to "No."
+  id?: string | null;       // Maps to "No."
   component: string;        // Maps to "Workstream"
   subComponent: string;     // Maps to "Sub-Workstream"
   agency: string;           // Maps to "Agency / Responsible" (comma-separated string)

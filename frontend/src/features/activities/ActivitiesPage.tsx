@@ -1,13 +1,16 @@
 import { useState, useRef } from 'react';
-import { mockActivities } from '../../data/fixtures';
 import type { Activity } from '../../data/types';
 import { useActivitiesFilters } from './hooks/useActivitiesFilters';
 import { ActivitiesToolbar } from './components/ActivitiesToolbar';
 import { ActivityList } from './components/ActivityList';
 import { ActivityDetailDrawer } from './components/ActivityDetailDrawer';
 
-export function ActivitiesPage() {
-  const filters = useActivitiesFilters(mockActivities);
+export interface ActivitiesPageProps {
+  activities: Activity[];
+}
+
+export function ActivitiesPage({ activities }: ActivitiesPageProps) {
+  const filters = useActivitiesFilters(activities);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
 
@@ -32,7 +35,7 @@ export function ActivitiesPage() {
         <div>
           <h1 className="text-2xl font-bold text-primary tracking-tight">Activities</h1>
           <p className="text-sm text-secondary mt-1">
-            Showing {filters.filtered.length} of {mockActivities.length} activities
+            Showing {filters.filtered.length} of {activities.length} activities
           </p>
         </div>
       </div>
@@ -40,11 +43,20 @@ export function ActivitiesPage() {
       <ActivitiesToolbar filters={filters} />
       
       <div className="flex-1 relative">
-        <ActivityList 
-          activities={filters.filtered} 
-          onActivityClick={handleOpenDetail} 
-          resetFilters={filters.resetFilters}
-        />
+        {activities.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-canvas rounded-2xl border border-subtle">
+            <h3 className="text-base font-semibold text-primary mb-2">No activities available</h3>
+            <p className="text-sm text-secondary max-w-md mx-auto">
+              There is currently no programme data to display. Please ensure the source system is populated.
+            </p>
+          </div>
+        ) : (
+          <ActivityList 
+            activities={filters.filtered} 
+            onActivityClick={handleOpenDetail} 
+            resetFilters={filters.resetFilters}
+          />
+        )}
       </div>
 
       <ActivityDetailDrawer 

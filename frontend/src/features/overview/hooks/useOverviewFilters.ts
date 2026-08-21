@@ -1,14 +1,13 @@
 import { useState, useMemo } from "react";
 import type { Activity } from "../../../data/types";
-import { mockActivities } from "../../../data/fixtures";
 
-export function useOverviewFilters() {
+export function useOverviewFilters(activities: Activity[]) {
   const [selectedAgency, setSelectedAgency] = useState<string>("All");
   const [selectedSubComponent, setSelectedSubComponent] = useState<string>("All");
   const [selectedTimeline, setSelectedTimeline] = useState<string>("All");
 
   const filteredActivities = useMemo(() => {
-    return mockActivities.filter((activity: Activity) => {
+    return activities.filter((activity: Activity) => {
       // Agency match (comma separated)
       const activityAgencies = activity.agency.split(",").map((a: string) => a.trim());
       const agencyMatch = selectedAgency === "All" || activityAgencies.includes(selectedAgency);
@@ -18,7 +17,7 @@ export function useOverviewFilters() {
       
       return agencyMatch && subCompMatch && timelineMatch;
     });
-  }, [selectedAgency, selectedSubComponent, selectedTimeline]);
+  }, [activities, selectedAgency, selectedSubComponent, selectedTimeline]);
 
   // Derived Metrics
   const totalActivities = filteredActivities.length;
@@ -35,17 +34,17 @@ export function useOverviewFilters() {
   // Available Filter Options
   const availableAgencies = useMemo(() => {
     const agencies = new Set<string>();
-    mockActivities.forEach((a: Activity) => {
+    activities.forEach((a: Activity) => {
       a.agency.split(",").forEach((ag: string) => agencies.add(ag.trim()));
     });
     return ["All", ...Array.from(agencies).sort()];
-  }, []);
+  }, [activities]);
 
   const availableSubComponents = useMemo(() => {
     const subComps = new Set<string>();
-    mockActivities.forEach((a: Activity) => subComps.add(a.subComponent));
+    activities.forEach((a: Activity) => subComps.add(a.subComponent));
     return ["All", ...Array.from(subComps).sort()];
-  }, []);
+  }, [activities]);
 
   const availableTimelines = ["All", "Overdue", "Immediate", "Due Soon", "On Track", "TBC"];
 
