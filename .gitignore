@@ -1,0 +1,99 @@
+# ============================================================
+# Python
+# ============================================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+.venv/
+venv/
+env/
+antenv/
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+
+# ============================================================
+# Environment / Secrets
+# ============================================================
+
+.env
+.env.*
+!.env.example
+
+.streamlit/secrets.toml
+
+# Sensitive JSON files
+# Keep the global JSON protection, but explicitly allow
+# legitimate project/frontend configuration below.
+*.json
+
+# Frontend/package configuration that MUST be tracked
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/tsconfig.json
+!frontend/tsconfig.app.json
+!frontend/tsconfig.node.json
+
+
+# ============================================================
+# Frontend / Node
+# ============================================================
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# ============================================================
+# Sensitive Project Data
+# ============================================================
+
+*.xlsx
+*.csv
+*.pdf
+
+
+# ============================================================
+# Power BI Screenshots
+# ============================================================
+
+# Only ignore the Power BI screenshot directory.
+# Do NOT ignore every PNG in the repository because the
+# frontend may legitimately contain PNG assets.
+
+assets/powerbi_screenshots/*.png
+
+
+# ============================================================
+# OS / Editor
+# ============================================================
+
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
+
+*.swp
+*.swo
+
+
+# ============================================================
+# Build / Temporary Files
+# ============================================================
+
+*.log
+*.tmp
+*.temp

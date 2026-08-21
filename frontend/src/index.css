@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  /* Mapping dynamic CSS variables into Tailwind's color palette */
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  
+  --color-subtle: var(--border-subtle);
+  --color-divider: var(--border-divider);
+  
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-muted: var(--text-muted);
+  
+  --color-brand: var(--accent-brand);
+  --color-danger: var(--accent-danger);
+  --color-warning: var(--accent-warning);
+  --color-success: var(--accent-success);
+
+  /* Static base colors */
+  --color-brand-primary: #342DDE;
+  --color-brand-primary-dark: #6366F1;
+  --color-brand-danger: #EF4444;
+  --color-brand-warning: #F59E0B;
+  --color-brand-success: #10B981;
+  /* Data Visualization Colors */
+  --color-pastel-blue: #E7F0FD;
+  --color-pastel-purple: #EEEEFC;
+  --color-data-green: #70DF8C;
+  --color-data-lavender: #B897EA;
+  --color-data-blue: #7CBBFC;
+  --color-data-teal: #6CE6CF;
+  --color-data-periwinkle: #9FBCEA;
+  --color-data-black: #010101;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --bg-canvas: #FFFFFF;
+    --bg-surface: #F9F9F9;
+    --bg-elevated: #F3F4F6;
+    --border-subtle: rgba(0, 0, 0, 0.04);
+    --border-divider: rgba(0, 0, 0, 0.04);
+    
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
+    --text-muted: #9CA3AF;
+    
+    --accent-brand: var(--color-brand-primary);
+    --accent-danger: var(--color-brand-danger);
+    --accent-warning: var(--color-brand-warning);
+    --accent-success: var(--color-brand-success);
+  }
+
+  .dark {
+    --bg-canvas: #0A090C;
+    --bg-surface: #111116;
+    --bg-elevated: #17171D;
+    --border-subtle: rgba(255, 255, 255, 0.04);
+    --border-divider: rgba(255, 255, 255, 0.02);
+    
+    --text-primary: #F4F4F6;
+    --text-secondary: #A7A7B0;
+    --text-muted: #707079;
+    
+    --accent-brand: var(--color-brand-primary-dark);
+  }
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-primary);
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
