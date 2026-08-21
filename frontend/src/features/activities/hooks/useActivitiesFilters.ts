@@ -20,7 +20,7 @@ export function useActivitiesFilters(activities: Activity[]) {
       const q = search.toLowerCase();
       result = result.filter(a => 
         a.title.toLowerCase().includes(q) ||
-        a.id.toLowerCase().includes(q) ||
+        (a.id && a.id.toLowerCase().includes(q)) ||
         a.agency.toLowerCase().includes(q) ||
         a.component.toLowerCase().includes(q) ||
         a.subComponent.toLowerCase().includes(q)

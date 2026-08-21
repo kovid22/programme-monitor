@@ -63,7 +63,7 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8">
           {/* Header */}
           <div className="flex flex-col gap-3">
-            <span className="text-xs font-mono text-muted">{activity.id}</span>
+            {activity.id && <span className="text-xs font-mono text-muted">{activity.id}</span>}
             <h1 className="text-xl font-bold text-primary leading-tight">{activity.title}</h1>
             <div className="flex flex-wrap gap-2 mt-2">
               <StatusBadge status={activity.completionStatus} />

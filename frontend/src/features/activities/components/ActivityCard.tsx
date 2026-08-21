@@ -19,7 +19,7 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
     >
       <div className="flex justify-between items-start gap-3 w-full">
         <div className="flex flex-col">
-          <span className="text-[10px] font-mono text-muted mb-0.5">{activity.id}</span>
+          {activity.id && <span className="text-[10px] font-mono text-muted mb-0.5">{activity.id}</span>}
           <span className="text-sm font-semibold text-primary leading-tight">{activity.title}</span>
         </div>
         <div className="shrink-0 pt-0.5">

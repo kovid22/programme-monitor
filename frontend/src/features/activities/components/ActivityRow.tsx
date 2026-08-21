@@ -19,7 +19,7 @@ export function ActivityRow({ activity, onClick }: ActivityRowProps) {
     >
       {/* Activity Title & ID */}
       <div className="col-span-4 flex flex-col pr-2">
-        <span className="text-[10px] font-mono text-muted group-hover:text-secondary transition-colors mb-0.5">{activity.id}</span>
+        {activity.id && <span className="text-[10px] font-mono text-muted group-hover:text-secondary transition-colors mb-0.5">{activity.id}</span>}
         <span className="text-sm font-medium text-primary line-clamp-2 leading-snug">{activity.title}</span>
       </div>
 
