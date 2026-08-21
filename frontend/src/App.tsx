@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 import { OverviewDashboard } from "./features/overview/OverviewDashboard";
+import { ActivitiesPage } from "./features/activities/ActivitiesPage";
 import { LayoutDashboard, ListTodo, Moon, Sun } from "lucide-react";
+import { cn } from "./lib/utils";
+
+type View = "overview" | "activities";
 
 function App() {
   const [isDark, setIsDark] = useState(false);
+  const [activeView, setActiveView] = useState<View>("overview");
 
   useEffect(() => {
     if (isDark) {
@@ -33,12 +38,30 @@ function App() {
         </div>
 
         <nav className="flex flex-row md:flex-col gap-2 md:gap-1 flex-1 overflow-x-auto md:overflow-visible pb-1 md:pb-0 scrollbar-hide">
-          <button type="button" className="flex items-center gap-2 md:gap-3 rounded-lg bg-surface px-3 py-2 text-sm font-medium text-primary shadow-sm border border-subtle whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-            <LayoutDashboard size={16} className="text-brand" />
+          <button 
+            type="button" 
+            onClick={() => setActiveView("overview")}
+            className={cn(
+              "flex items-center gap-2 md:gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              activeView === "overview" 
+                ? "bg-surface text-primary shadow-sm border border-subtle" 
+                : "text-secondary hover:text-primary hover:bg-surface/50 border border-transparent"
+            )}
+          >
+            <LayoutDashboard size={16} className={activeView === "overview" ? "text-brand" : "text-muted"} />
             Overview
           </button>
-          <button type="button" className="flex items-center gap-2 md:gap-3 rounded-lg px-3 py-2 text-sm font-medium text-secondary hover:text-primary hover:bg-surface/50 transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-            <ListTodo size={16} className="text-muted" />
+          <button 
+            type="button" 
+            onClick={() => setActiveView("activities")}
+            className={cn(
+              "flex items-center gap-2 md:gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              activeView === "activities" 
+                ? "bg-surface text-primary shadow-sm border border-subtle" 
+                : "text-secondary hover:text-primary hover:bg-surface/50 border border-transparent"
+            )}
+          >
+            <ListTodo size={16} className={activeView === "activities" ? "text-brand" : "text-muted"} />
             Activities
           </button>
         </nav>
@@ -56,7 +79,7 @@ function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto">
         <div className="max-w-[1440px] w-full mx-auto px-4 sm:px-6 md:px-8 pt-6 pb-10 lg:px-12 lg:pt-8 lg:pb-12">
-          <OverviewDashboard />
+          {activeView === "overview" ? <OverviewDashboard /> : <ActivitiesPage />}
         </div>
       </main>
     </div>
