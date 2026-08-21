@@ -1,0 +1,56 @@
+import { useState, useRef } from 'react';
+import { mockActivities } from '../../data/fixtures';
+import type { Activity } from '../../data/types';
+import { useActivitiesFilters } from './hooks/useActivitiesFilters';
+import { ActivitiesToolbar } from './components/ActivitiesToolbar';
+import { ActivityList } from './components/ActivityList';
+import { ActivityDetailDrawer } from './components/ActivityDetailDrawer';
+
+export function ActivitiesPage() {
+  const filters = useActivitiesFilters(mockActivities);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  const handleOpenDetail = (activity: Activity) => {
+    triggerRef.current = document.activeElement as HTMLElement;
+    setSelectedActivity(activity);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedActivity(null);
+    if (triggerRef.current) {
+      // Restore focus to the element that opened the drawer
+      setTimeout(() => {
+        triggerRef.current?.focus();
+      }, 10);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full w-full max-w-[1200px] mx-auto animate-in fade-in duration-300">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-2">
+        <div>
+          <h1 className="text-2xl font-bold text-primary tracking-tight">Activities</h1>
+          <p className="text-sm text-secondary mt-1">
+            Showing {filters.filtered.length} of {mockActivities.length} activities
+          </p>
+        </div>
+      </div>
+
+      <ActivitiesToolbar filters={filters} />
+      
+      <div className="flex-1 relative">
+        <ActivityList 
+          activities={filters.filtered} 
+          onActivityClick={handleOpenDetail} 
+          resetFilters={filters.resetFilters}
+        />
+      </div>
+
+      <ActivityDetailDrawer 
+        activity={selectedActivity} 
+        onClose={handleCloseDetail} 
+      />
+    </div>
+  );
+}

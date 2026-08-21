@@ -47,7 +47,7 @@ export function useOverviewFilters() {
     return ["All", ...Array.from(subComps).sort()];
   }, []);
 
-  const availableTimelines = ["All", "Immediate", "Overdue", "Due Soon", "On Track", "TBC"];
+  const availableTimelines = ["All", "Overdue", "Immediate", "Due Soon", "On Track", "TBC"];
 
   return {
     filteredActivities,
