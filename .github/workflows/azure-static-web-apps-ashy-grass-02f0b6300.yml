@@ -16,6 +16,8 @@ jobs:
     name: Build and Deploy Job
     steps:
       - uses: actions/checkout@v4
+        env:
+          VITE_API_BASE_URL: https://programme-monitor-api-hwaugmcyaac6ahgu.eastasia-01.azurewebsites.net
         with:
           submodules: true
           lfs: false
