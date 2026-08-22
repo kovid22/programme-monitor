@@ -1,7 +1,8 @@
 # Programme Monitor
 
-![Version](https://img.shields.io/badge/version-v0.4.1-black)
+![Version](https://img.shields.io/badge/version-v0.4.2-black)
 ![Frontend](https://img.shields.io/badge/frontend-Azure%20Static%20Web%20Apps-blue)
+![Backend](https://img.shields.io/badge/backend-Azure%20App%20Service-blue)
 
 Programme Monitor is a lightweight operational analytics dashboard for tracking programme delivery, deadlines, risk, and value concentration.
 
