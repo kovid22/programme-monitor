@@ -208,40 +208,42 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
       </div>
 
       {hoveredDate && hoverDataMap.has(hoveredDate) && (
-        <div className="absolute bottom-6 left-6 p-4 bg-canvas border border-subtle rounded-xl shadow-xl z-50 w-64 pointer-events-none animate-in fade-in duration-100">
-          <p className="text-sm font-semibold text-primary mb-1">
+        <div className="absolute bottom-6 left-6 p-3.5 bg-canvas border border-subtle rounded-xl shadow-md z-50 w-64 pointer-events-none animate-in fade-in duration-100">
+          <p className="text-sm font-semibold text-primary mb-2.5">
             {parseLocalDate(hoveredDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>
           
-          <div className="grid grid-cols-2 gap-2 mb-3 mt-2">
+          <div className="grid grid-cols-2 gap-y-2 gap-x-3 mb-2.5">
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5">Due</p>
-              <p className="text-xs font-medium text-primary">{hoverDataMap.get(hoveredDate)!.total} activities</p>
+              <p className="text-xs text-muted mb-0.5">Due</p>
+              <p className="text-xs font-medium text-primary">{hoverDataMap.get(hoveredDate)!.total}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5">At Risk</p>
+              <p className="text-xs text-muted mb-0.5">At Risk</p>
               <p className={cn("text-xs font-medium", hoverDataMap.get(hoveredDate)!.risk > 0 ? "text-danger" : "text-primary")}>
                 {hoverDataMap.get(hoveredDate)!.risk}
               </p>
             </div>
-            <div className="col-span-2">
-              <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5">Est. Value</p>
+            <div>
+              <p className="text-xs text-muted mb-0.5">Est. Value</p>
               <p className="text-xs font-medium text-primary">₹{hoverDataMap.get(hoveredDate)!.val.toLocaleString('en-IN')}L</p>
             </div>
-            <div className="col-span-2">
-              <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5">Agencies</p>
-              <p className="text-[11px] text-secondary truncate">{hoverDataMap.get(hoveredDate)!.agencies}</p>
+            <div>
+              <p className="text-xs text-muted mb-0.5">Agencies</p>
+              <p className="text-xs font-medium text-primary truncate">{hoverDataMap.get(hoveredDate)!.agencies}</p>
             </div>
           </div>
           
-          <div className="border-t border-subtle pt-2">
-            <p className="text-[11px] uppercase tracking-wider text-muted mb-1">Activities</p>
-            {hoverDataMap.get(hoveredDate)!.titles.map((t: string, i: number) => (
-              <p key={i} className="text-[11px] text-secondary truncate mb-0.5">• {t}</p>
-            ))}
-            {hoverDataMap.get(hoveredDate)!.more > 0 && (
-              <p className="text-[11px] text-muted italic mt-1">+ {hoverDataMap.get(hoveredDate)!.more} more</p>
-            )}
+          <div className="pt-2 mt-1">
+            <p className="text-xs text-muted mb-1.5">Activities</p>
+            <div className="flex flex-col gap-1">
+              {hoverDataMap.get(hoveredDate)!.titles.map((t: string, i: number) => (
+                <p key={i} className="text-xs text-secondary truncate">• {t}</p>
+              ))}
+              {hoverDataMap.get(hoveredDate)!.more > 0 && (
+                <p className="text-xs text-muted italic mt-0.5">+ {hoverDataMap.get(hoveredDate)!.more} more</p>
+              )}
+            </div>
           </div>
         </div>
       )}

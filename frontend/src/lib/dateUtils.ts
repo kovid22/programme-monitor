@@ -207,6 +207,13 @@ export function calculateCalendarData(activities: Activity[], overrideStartMonth
       days.push({ empty: false, dStr, dayNum: d });
     }
     
+    if (days.length > 35) {
+      const overflowDays = days.splice(35);
+      for (let i = 0; i < overflowDays.length; i++) {
+        days[i] = overflowDays[i];
+      }
+    }
+    
     return { label: monthLabel, days };
   });
 

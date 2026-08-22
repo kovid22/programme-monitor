@@ -2,14 +2,14 @@ import { Select } from "../../../components/ui/Select";
 
 interface FilterBarProps {
   filters: {
-    selectedAgency: string;
-    setSelectedAgency: (v: string) => void;
+    selectedAgency: string[];
+    setSelectedAgency: (v: string[]) => void;
     availableAgencies: string[];
-    selectedSubComponent: string;
-    setSelectedSubComponent: (v: string) => void;
+    selectedSubComponent: string[];
+    setSelectedSubComponent: (v: string[]) => void;
     availableSubComponents: string[];
-    selectedTimeline: string;
-    setSelectedTimeline: (v: string) => void;
+    selectedTimeline: string[];
+    setSelectedTimeline: (v: string[]) => void;
     availableTimelines: string[];
   };
 }

@@ -7,10 +7,11 @@ import { ActivityDetailDrawer } from './components/ActivityDetailDrawer';
 
 export interface ActivitiesPageProps {
   activities: Activity[];
+  initialFilters?: { timelineStatus?: string[] } | null;
 }
 
-export function ActivitiesPage({ activities }: ActivitiesPageProps) {
-  const filters = useActivitiesFilters(activities);
+export function ActivitiesPage({ activities, initialFilters }: ActivitiesPageProps) {
+  const filters = useActivitiesFilters(activities, initialFilters);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
 

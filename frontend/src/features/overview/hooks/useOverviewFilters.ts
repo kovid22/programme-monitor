@@ -3,18 +3,18 @@ import type { Activity } from "../../../data/types";
 import { isEffectivelyAtRisk } from "../../../lib/statusUtils";
 
 export function useOverviewFilters(activities: Activity[]) {
-  const [selectedAgency, setSelectedAgency] = useState<string>("All");
-  const [selectedSubComponent, setSelectedSubComponent] = useState<string>("All");
-  const [selectedTimeline, setSelectedTimeline] = useState<string>("All");
+  const [selectedAgency, setSelectedAgency] = useState<string[]>([]);
+  const [selectedSubComponent, setSelectedSubComponent] = useState<string[]>([]);
+  const [selectedTimeline, setSelectedTimeline] = useState<string[]>([]);
 
   const filteredActivities = useMemo(() => {
     return activities.filter((activity: Activity) => {
       // Agency match (comma separated)
       const activityAgencies = activity.agency.split(",").map((a: string) => a.trim());
-      const agencyMatch = selectedAgency === "All" || activityAgencies.includes(selectedAgency);
+      const agencyMatch = selectedAgency.length === 0 || selectedAgency.some(ag => activityAgencies.includes(ag));
       
-      const subCompMatch = selectedSubComponent === "All" || activity.subComponent === selectedSubComponent;
-      const timelineMatch = selectedTimeline === "All" || activity.timelineStatus === selectedTimeline;
+      const subCompMatch = selectedSubComponent.length === 0 || selectedSubComponent.includes(activity.subComponent);
+      const timelineMatch = selectedTimeline.length === 0 || selectedTimeline.includes(activity.timelineStatus);
       
       return agencyMatch && subCompMatch && timelineMatch;
     });

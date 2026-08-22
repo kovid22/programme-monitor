@@ -1,16 +1,28 @@
 import { useState, useMemo } from 'react';
 import type { Activity } from '../../../data/types';
 import { parseLocalDate } from '../../../lib/dateUtils';
+import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
 
 export type SortOption = 'urgency' | 'date_asc' | 'date_desc' | 'value_desc' | 'status' | 'alpha';
 
-export function useActivitiesFilters(activities: Activity[]) {
+export function useActivitiesFilters(
+  activities: Activity[],
+  initialFilters?: { timelineStatus?: string[] } | null
+) {
   const [search, setSearch] = useState('');
-  const [workstream, setWorkstream] = useState('All');
-  const [agency, setAgency] = useState('All');
-  const [timelineStatus, setTimelineStatus] = useState('All');
-  const [completionStatus, setCompletionStatus] = useState('All');
+  const [workstream, setWorkstream] = useState<string[]>([]);
+  const [agency, setAgency] = useState<string[]>([]);
+  const [timelineStatus, setTimelineStatus] = useState<string[]>(initialFilters?.timelineStatus || []);
+  const [completionStatus, setCompletionStatus] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('urgency');
+
+  const [prevInitialFilters, setPrevInitialFilters] = useState(initialFilters);
+  if (initialFilters !== prevInitialFilters) {
+    setPrevInitialFilters(initialFilters);
+    if (initialFilters?.timelineStatus) {
+      setTimelineStatus(initialFilters.timelineStatus);
+    }
+  }
 
   const filtered = useMemo(() => {
     // We create a shallow copy first to avoid mutating original arrays, though filter does this.
@@ -27,17 +39,24 @@ export function useActivitiesFilters(activities: Activity[]) {
       );
     }
 
-    if (workstream !== 'All') {
-      result = result.filter(a => a.component === workstream);
+    if (workstream.length > 0) {
+      result = result.filter(a => workstream.includes(a.component));
     }
-    if (agency !== 'All') {
-      result = result.filter(a => a.agency.includes(agency));
+    if (agency.length > 0) {
+      result = result.filter(a => agency.some(ag => a.agency.includes(ag)));
     }
-    if (timelineStatus !== 'All') {
-      result = result.filter(a => a.timelineStatus === timelineStatus);
+    if (timelineStatus.length > 0) {
+      result = result.filter(a => {
+        if (!timelineStatus.includes(a.timelineStatus)) return false;
+        // Apply completion-over-risk rule for risk statuses
+        if (a.timelineStatus === 'Overdue' || a.timelineStatus === 'Immediate') {
+          return isEffectivelyAtRisk(a);
+        }
+        return true;
+      });
     }
-    if (completionStatus !== 'All') {
-      result = result.filter(a => a.completionStatus === completionStatus);
+    if (completionStatus.length > 0) {
+      result = result.filter(a => completionStatus.includes(a.completionStatus));
     }
 
     // Sort
@@ -103,14 +122,14 @@ export function useActivitiesFilters(activities: Activity[]) {
 
   const resetFilters = () => {
     setSearch('');
-    setWorkstream('All');
-    setAgency('All');
-    setTimelineStatus('All');
-    setCompletionStatus('All');
+    setWorkstream([]);
+    setAgency([]);
+    setTimelineStatus([]);
+    setCompletionStatus([]);
     setSortBy('urgency');
   };
 
-  const hasActiveFilters = search.trim() !== '' || workstream !== 'All' || agency !== 'All' || timelineStatus !== 'All' || completionStatus !== 'All';
+  const hasActiveFilters = search.trim() !== '' || workstream.length > 0 || agency.length > 0 || timelineStatus.length > 0 || completionStatus.length > 0;
 
   return {
     search, setSearch,

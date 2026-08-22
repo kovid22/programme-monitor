@@ -1,18 +1,35 @@
+import { useState, useRef } from "react";
 import { FilterBar } from "./components/FilterBar";
 import { ProgrammeHealth } from "./components/ProgrammeHealth";
 import { DeliveryCalendar } from "./components/DeliveryCalendar";
 import { DeliveryFlow } from "./components/DeliveryFlow";
 import { ValueConcentration } from "./components/ValueConcentration";
 import { RiskAlerts } from "./components/RiskAlerts";
+import { ActivityDetailDrawer } from "../activities/components/ActivityDetailDrawer";
 import { useOverviewFilters } from "./hooks/useOverviewFilters";
 import type { Activity } from "../../data/types";
 
 export interface OverviewDashboardProps {
   activities: Activity[];
+  onNavigateToActivities?: (filters?: { timelineStatus?: string[] }) => void;
 }
 
-export function OverviewDashboard({ activities }: OverviewDashboardProps) {
+export function OverviewDashboard({ activities, onNavigateToActivities }: OverviewDashboardProps) {
   const { filteredActivities, metrics, filters } = useOverviewFilters(activities);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  const handleOpenDetail = (activity: Activity) => {
+    triggerRef.current = document.activeElement as HTMLElement;
+    setSelectedActivity(activity);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedActivity(null);
+    if (triggerRef.current) {
+      triggerRef.current.focus();
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,25 +59,36 @@ export function OverviewDashboard({ activities }: OverviewDashboardProps) {
           {/* Primary KPI Tray */}
           <ProgrammeHealth metrics={metrics} />
 
-          {/* Row 1: Timeline & Needs Attention */}
+          {/* Row 1: Timeline & Value */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div className="lg:col-span-3 flex flex-col">
               <DeliveryCalendar activities={filteredActivities} />
             </div>
             <div className="lg:col-span-2 flex flex-col">
-              <RiskAlerts activities={metrics.atRiskActivities} />
+              <ValueConcentration activities={filteredActivities} />
             </div>
           </div>
 
-          {/* Row 2: Structure & Value */}
+          {/* Row 2: Structure & Needs Attention */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div className="lg:col-span-2 flex flex-col">
-              <ValueConcentration activities={filteredActivities} />
+              <RiskAlerts 
+                activities={metrics.atRiskActivities} 
+                onNavigateToActivities={onNavigateToActivities}
+                onOpenActivity={handleOpenDetail}
+              />
             </div>
             <div className="lg:col-span-3 flex flex-col min-w-0 overflow-hidden">
               <DeliveryFlow activities={filteredActivities} />
             </div>
           </div>
+
+          {selectedActivity && (
+            <ActivityDetailDrawer 
+              activity={selectedActivity} 
+              onClose={handleCloseDetail} 
+            />
+          )}
         </>
       )}
       

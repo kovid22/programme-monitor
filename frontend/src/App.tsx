@@ -10,7 +10,15 @@ type View = "overview" | "activities";
 function App() {
   const [isDark, setIsDark] = useState(false);
   const [activeView, setActiveView] = useState<View>("overview");
+  const [initialFilters, setInitialFilters] = useState<{ timelineStatus?: string[] } | null>(null);
   const { activities, isLoading, error, refresh } = useActivitiesData();
+
+  const handleNavigateToActivities = (filters?: { timelineStatus?: string[] }) => {
+    if (filters) {
+      setInitialFilters(filters);
+    }
+    setActiveView("activities");
+  };
 
   useEffect(() => {
     if (isDark) {
@@ -66,7 +74,7 @@ function App() {
           </button>
           <button 
             type="button" 
-            onClick={() => setActiveView("activities")}
+            onClick={() => handleNavigateToActivities({ timelineStatus: [] })}
             className={cn(
               "flex items-center gap-2 md:gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
               activeView === "activities" 
@@ -127,7 +135,11 @@ function App() {
                   <span>Unable to refresh data. Showing previously loaded activities.</span>
                 </div>
               )}
-              {activeView === "overview" ? <OverviewDashboard activities={activities} /> : <ActivitiesPage activities={activities} />}
+              {activeView === "overview" ? (
+                <OverviewDashboard activities={activities} onNavigateToActivities={handleNavigateToActivities} />
+              ) : (
+                <ActivitiesPage activities={activities} initialFilters={initialFilters} />
+              )}
             </>
           )}
 
