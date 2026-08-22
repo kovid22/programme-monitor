@@ -1,70 +1,60 @@
 # Programme Monitor
 
-Programme Monitor is a generic, lightweight analytics dashboard designed for operational tracking. It provides high-density visualizations of programme performance, delivery flows, and upcoming deadlines, helping teams easily identify risks and concentrate on value delivery.
+![Version](https://img.shields.io/badge/version-v0.4.1-black)
+![Frontend](https://img.shields.io/badge/frontend-Azure%20Static%20Web%20Apps-blue)
 
-## Tech Stack
+Programme Monitor is a lightweight operational analytics dashboard for tracking programme delivery, deadlines, risk, and value concentration.
 
-The application is a pure client-side web application built with:
-- **React 18**
-- **TypeScript**
-- **Vite**
-- **Tailwind CSS v4**
+## Stack
 
-## Key Capabilities
+- React 19 + TypeScript
+- Vite
+- Tailwind CSS v4
+- FastAPI
+- Google Sheets
+- Azure Static Web Apps
+- Azure App Service
 
-The `Overview` module currently provides:
-- **Programme Health:** Top-level metrics summarizing overall status.
-- **Delivery Calendar:** A 3-month rolling density calendar highlighting upcoming activity targets and peak weeks.
-- **Needs Attention:** An actionable inbox for immediate/overdue work.
-- **Value Concentration:** Identifies financial exposure across major programme workstreams.
-- **Delivery Flow:** A proportional portfolio band visualization that maps activities and risk horizontally by Agency.
+## Features
 
-## Synthetic Demo Data
+- Programme overview and delivery metrics
+- Activity search, filtering, sorting, and detail view
+- Live programme data from Google Sheets
+- Manual data sync
+- Responsive light and dark interfaces
 
-The dashboard currently uses synthetic fixture data (`mockActivities`) to demonstrate capabilities. This data generates dates relative to the current day, ensuring the dashboard always looks alive and populated. There is no real organization, location, or sensitive information present.
+## Architecture
 
-## Expected Data Schema
-
-The dashboard expects a flat array of operational activities with the following generic fields:
-- `id` (string)
-- `component` (string, mapped to Workstream)
-- `subComponent` (string, mapped to Sub-Workstream)
-- `agency` (string)
-- `title` (string)
-- `targetDate` (string, ISO)
-- `estValue` (number)
-- `timelineStatus` ("On Track" | "Due Soon" | "Immediate" | "Overdue" | "TBC")
-- `completionStatus` ("Completed" | "In Progress" | "Not Started" | "Delayed")
+```text
+Google Sheets
+    ↓
+FastAPI / Azure App Service
+    ↓
+React / Azure Static Web Apps
+```
 
 ## Local Development
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
+Frontend:
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-   The application will be available at `http://localhost:5173`.
-
-## Production Build
-
-To create an optimized production build:
 ```bash
 cd frontend
-npm run build
+npm install
+npm run dev
 ```
-The compiled static assets will be output to the `frontend/dist` directory.
 
-## Current Limitations
+Backend:
 
-- State is currently managed locally (e.g., filters are not yet synced to URL parameters).
-- There is no live backend or authentication logic.
-- Mobile responsiveness is implemented at a high level but may require fine-tuning for complex charts on extremely small viewports.
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Environment examples are provided in the frontend and backend `.env.example` files.
+
+## Status
+
+The core application and live-data pipeline are deployed.
+
+Frontend refinement and documentation are ongoing.
