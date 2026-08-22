@@ -59,7 +59,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4 z-10">
         <div>
           <h3 className="text-sm font-semibold text-primary mb-1">Delivery Calendar</h3>
-          <div className="flex flex-wrap items-center gap-4 text-xs text-secondary font-medium">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted font-normal">
             <span>{summary.deadlines} {summary.deadlines === 1 ? 'deadline' : 'deadlines'}</span>
             {summary.peak && (
               <span>{summary.peak}</span>
@@ -192,7 +192,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 pt-3 mt-1 border-t border-subtle text-xs text-secondary font-medium">
+      <div className="flex flex-wrap items-center justify-center gap-5 pt-2 mt-1 text-xs text-secondary font-medium">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-[2px] bg-data-green/75"></span>
           Completed

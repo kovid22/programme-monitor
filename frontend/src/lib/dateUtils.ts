@@ -75,22 +75,59 @@ export function calculateCalendarData(activities: Activity[], overrideStartMonth
     monthCounts.set(mStr, (monthCounts.get(mStr) || 0) + 1);
   });
 
-  // Generate contiguous months range from 2015-01 to 2040-12
+  // Calculate available months span
+  let minMonth = currentMonthStr;
+  let maxMonth = currentMonthStr;
+  if (monthCounts.size > 0) {
+    const sorted = Array.from(monthCounts.keys()).sort();
+    minMonth = sorted[0];
+    maxMonth = sorted[sorted.length - 1];
+  }
+
+  // Generate contiguous months range
   const allMonthsContiguous: string[] = [];
-  for (let y = 2015; y <= 2040; y++) {
-    for (let m = 1; m <= 12; m++) {
-      allMonthsContiguous.push(`${y}-${String(m).padStart(2, '0')}`);
+  let [currY, currM] = minMonth.split('-').map(Number);
+  const [endY, endM] = maxMonth.split('-').map(Number);
+  
+  while (currY < endY || (currY === endY && currM <= endM)) {
+    allMonthsContiguous.push(`${currY}-${String(currM).padStart(2, '0')}`);
+    currM++;
+    if (currM > 12) {
+      currM = 1;
+      currY++;
+    }
+  }
+  
+  // Ensure at least 3 months exist
+  while (allMonthsContiguous.length < 3) {
+    allMonthsContiguous.push(`${currY}-${String(currM).padStart(2, '0')}`);
+    currM++;
+    if (currM > 12) {
+      currM = 1;
+      currY++;
     }
   }
 
   // Determine window start
-  let windowStart = currentMonthStr; // Always default to current month
+  let windowStart: string;
   if (overrideStartMonth && allMonthsContiguous.includes(overrideStartMonth)) {
     windowStart = overrideStartMonth;
   } else {
-    const idx = allMonthsContiguous.indexOf(currentMonthStr);
-    if (idx > allMonthsContiguous.length - 3) {
-      windowStart = allMonthsContiguous[allMonthsContiguous.length - 3];
+    if (monthCounts.size === 0) {
+      windowStart = allMonthsContiguous[0];
+    } else {
+      if (currentMonthStr < minMonth) {
+        windowStart = minMonth;
+      } else if (currentMonthStr > maxMonth) {
+        windowStart = allMonthsContiguous[allMonthsContiguous.length - 3];
+      } else {
+        windowStart = currentMonthStr;
+      }
+      
+      const idx = allMonthsContiguous.indexOf(windowStart);
+      if (idx > allMonthsContiguous.length - 3) {
+        windowStart = allMonthsContiguous[allMonthsContiguous.length - 3];
+      }
     }
   }
 
