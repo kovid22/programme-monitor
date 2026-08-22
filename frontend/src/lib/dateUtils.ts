@@ -1,8 +1,10 @@
 import type { Activity } from "../data/types";
+import { isEffectivelyAtRisk } from "./statusUtils";
 
 export interface HoverData {
   total: number;
   risk: number;
+  normal: number;
   completed: number;
   val: number;
   agencies: string;
@@ -32,6 +34,8 @@ export interface CalendarData {
   hoverDataMap: Map<string, HoverData>;
   maxDailyActivities: number;
   todayStr: string;
+  availableMonths: string[];
+  currentWindowStart: string;
 }
 
 export function toLocalDateString(d: Date): string {
@@ -46,9 +50,10 @@ export function parseLocalDate(dStr: string): Date {
   return new Date(y, m - 1, d);
 }
 
-export function calculateCalendarData(activities: Activity[]): CalendarData {
+export function calculateCalendarData(activities: Activity[], overrideStartMonth?: string): CalendarData {
   const today = new Date();
   const todayStr = toLocalDateString(today);
+  const currentMonthStr = todayStr.substring(0, 7);
   
   // Separate dated and TBC
   const dated = activities.filter(a => a.targetDate && a.targetDate.trim() !== "");
@@ -59,7 +64,7 @@ export function calculateCalendarData(activities: Activity[]): CalendarData {
   const monthCounts = new Map<string, number>();
   
   dated.forEach(a => {
-    if (a.timelineStatus === "Immediate" || a.timelineStatus === "Overdue") {
+    if (isEffectivelyAtRisk(a)) {
       atRiskCount++;
     }
     const dStr = a.targetDate!;
@@ -70,56 +75,27 @@ export function calculateCalendarData(activities: Activity[]): CalendarData {
     monthCounts.set(mStr, (monthCounts.get(mStr) || 0) + 1);
   });
 
-  // Find best 3-month window
-  let sortedMonths = Array.from(monthCounts.keys()).sort();
-  
-  if (sortedMonths.length === 0) {
-    const y = today.getFullYear();
-    const m = today.getMonth() + 1;
-    sortedMonths = [
-      `${y}-${String(m).padStart(2, '0')}`,
-      `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, '0')}`,
-      `${m >= 11 ? y + 1 : y}-${String((m + 1) % 12 + 1).padStart(2, '0')}`
-    ];
-  }
-
-  const minMonth = sortedMonths[0];
-  const maxMonth = sortedMonths[sortedMonths.length - 1];
-  
+  // Generate contiguous months range from 2015-01 to 2040-12
   const allMonthsContiguous: string[] = [];
-  let [currY, currM] = minMonth.split('-').map(Number);
-  const [endY, endM] = maxMonth.split('-').map(Number);
-  
-  while (currY < endY || (currY === endY && currM <= endM)) {
-    allMonthsContiguous.push(`${currY}-${String(currM).padStart(2, '0')}`);
-    currM++;
-    if (currM > 12) {
-      currM = 1;
-      currY++;
+  for (let y = 2015; y <= 2040; y++) {
+    for (let m = 1; m <= 12; m++) {
+      allMonthsContiguous.push(`${y}-${String(m).padStart(2, '0')}`);
     }
-  }
-  
-  while (allMonthsContiguous.length < 3) {
-    currM++;
-    if (currM > 12) {
-      currM = 1;
-      currY++;
-    }
-    allMonthsContiguous.push(`${currY}-${String(currM).padStart(2, '0')}`);
   }
 
-  let maxCount = -1;
-  let bestWindow = allMonthsContiguous.slice(0, 3);
-  
-  for (let i = 0; i <= allMonthsContiguous.length - 3; i++) {
-    const window = allMonthsContiguous.slice(i, i + 3);
-    let count = 0;
-    window.forEach(m => { count += monthCounts.get(m) || 0; });
-    if (count > maxCount) {
-      maxCount = count;
-      bestWindow = window;
+  // Determine window start
+  let windowStart = currentMonthStr; // Always default to current month
+  if (overrideStartMonth && allMonthsContiguous.includes(overrideStartMonth)) {
+    windowStart = overrideStartMonth;
+  } else {
+    const idx = allMonthsContiguous.indexOf(currentMonthStr);
+    if (idx > allMonthsContiguous.length - 3) {
+      windowStart = allMonthsContiguous[allMonthsContiguous.length - 3];
     }
   }
+
+  const startIdx = allMonthsContiguous.indexOf(windowStart);
+  const windowMonths = allMonthsContiguous.slice(startIdx, startIdx + 3);
 
   let maxDaily = 0;
   const hoverDataMap = new Map<string, HoverData>();
@@ -127,14 +103,17 @@ export function calculateCalendarData(activities: Activity[]): CalendarData {
   for (const [dStr, acts] of dateMap.entries()) {
     if (acts.length > maxDaily) maxDaily = acts.length;
     
-    const risk = acts.filter(a => a.timelineStatus === "Immediate" || a.timelineStatus === "Overdue").length;
     const completed = acts.filter(a => a.completionStatus === "Completed").length;
+    const risk = acts.filter(a => isEffectivelyAtRisk(a)).length;
+    const normal = acts.length - completed - risk;
+    
     const val = acts.reduce((acc, a) => acc + (a.estValue || 0), 0);
     const agencies = Array.from(new Set(acts.map(a => a.agency))).join(", ");
     
     hoverDataMap.set(dStr, {
       total: acts.length,
       risk,
+      normal,
       completed,
       val,
       agencies,
@@ -168,7 +147,7 @@ export function calculateCalendarData(activities: Activity[]): CalendarData {
     peakWeekStr = `Peak week: ${start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}–${end.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
   }
 
-  const monthsData = bestWindow.map(mStr => {
+  const monthsData = windowMonths.map(mStr => {
     const [yStr, monthStr] = mStr.split('-');
     const year = parseInt(yStr, 10);
     const month = parseInt(monthStr, 10) - 1;
@@ -204,6 +183,8 @@ export function calculateCalendarData(activities: Activity[]): CalendarData {
     tbcCount,
     hoverDataMap,
     maxDailyActivities: maxDaily,
-    todayStr
+    todayStr,
+    availableMonths: allMonthsContiguous,
+    currentWindowStart: windowStart
   };
 }

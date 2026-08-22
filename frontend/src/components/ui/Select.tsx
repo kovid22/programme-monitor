@@ -43,7 +43,7 @@ export function Select({ label, value, options, onChange, className }: SelectPro
         )}
       >
         {label && (
-          <span className="text-[10px] font-semibold tracking-wide uppercase text-secondary">
+          <span className="text-[11px] font-semibold tracking-wide uppercase text-secondary">
             {label}
           </span>
         )}

@@ -3,6 +3,7 @@ import { X, Calendar, User, Briefcase, IndianRupee } from 'lucide-react';
 import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
 import { parseLocalDate } from '../../../lib/dateUtils';
+import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
 
 interface ActivityDetailDrawerProps {
   activity: Activity | null;
@@ -31,7 +32,7 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
 
   if (!activity) return null;
 
-  const isRisk = activity.timelineStatus === 'Overdue' || activity.timelineStatus === 'Immediate';
+  const isRisk = isEffectivelyAtRisk(activity);
   const targetDateStr = activity.targetDate ? parseLocalDate(activity.targetDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBC';
 
   return (

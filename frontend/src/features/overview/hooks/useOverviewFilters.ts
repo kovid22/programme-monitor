@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import type { Activity } from "../../../data/types";
+import { isEffectivelyAtRisk } from "../../../lib/statusUtils";
 
 export function useOverviewFilters(activities: Activity[]) {
   const [selectedAgency, setSelectedAgency] = useState<string>("All");
@@ -24,9 +25,7 @@ export function useOverviewFilters(activities: Activity[]) {
   const completedActivities = filteredActivities.filter((a: Activity) => a.completionStatus === "Completed").length;
   const completionPercentage = totalActivities === 0 ? 0 : Math.round((completedActivities / totalActivities) * 100);
 
-  const atRiskActivities = filteredActivities.filter(
-    (a: Activity) => a.timelineStatus === "Immediate" || a.timelineStatus === "Overdue"
-  );
+  const atRiskActivities = filteredActivities.filter((a: Activity) => isEffectivelyAtRisk(a));
   
   const totalEstValue = filteredActivities.reduce((sum: number, a: Activity) => sum + (a.estValue || 0), 0);
   const totalEstValueAtRisk = atRiskActivities.reduce((sum: number, a: Activity) => sum + (a.estValue || 0), 0);

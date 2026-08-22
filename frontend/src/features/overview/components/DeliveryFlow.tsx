@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { cn } from "../../../lib/utils";
 import type { Activity } from "../../../data/types";
+import { isEffectivelyAtRisk } from "../../../lib/statusUtils";
 
 interface DeliveryFlowProps {
   activities: Activity[];
@@ -25,7 +26,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
       
       const compMap = new Map<string, Activity[]>();
       agActs.forEach(a => {
-        if (a.timelineStatus === "Immediate" || a.timelineStatus === "Overdue") totalRisk++;
+        if (isEffectivelyAtRisk(a)) totalRisk++;
         totalValue += (a.estValue || 0);
         
         const comp = a.component || "Unassigned";
@@ -37,9 +38,9 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
         const completed = cActs.filter(a => a.completionStatus === "Completed").length;
         const inProgress = cActs.filter(a => a.completionStatus === "In Progress").length;
         const delayed = cActs.filter(a => a.completionStatus === "Delayed").length;
-        const risk = cActs.filter(a => a.timelineStatus === "Immediate" || a.timelineStatus === "Overdue").length;
+        const risk = cActs.filter(a => isEffectivelyAtRisk(a)).length;
         const value = cActs.reduce((sum, a) => sum + (a.estValue || 0), 0);
-        const riskValue = cActs.filter(a => a.timelineStatus === "Immediate" || a.timelineStatus === "Overdue").reduce((sum, a) => sum + (a.estValue || 0), 0);
+        const riskValue = cActs.filter(a => isEffectivelyAtRisk(a)).reduce((sum, a) => sum + (a.estValue || 0), 0);
         
         return {
           name: compName,
@@ -94,11 +95,11 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1.5">
             <div className="h-2 w-4 rounded-sm bg-data-green/80"></div>
-            <span className="text-[10px] font-medium text-secondary uppercase tracking-wider">Completion</span>
+            <span className="text-[11px] font-medium text-muted uppercase tracking-wider">Completion</span>
           </div>
           <div className="flex items-center gap-1.5 ml-2">
             <div className="h-2.5 w-2.5 rounded-sm border-b-2 border-danger"></div>
-            <span className="text-[10px] font-medium text-secondary uppercase tracking-wider">Risk</span>
+            <span className="text-[11px] font-medium text-muted uppercase tracking-wider">Risk</span>
           </div>
         </div>
       </div>
@@ -150,16 +151,16 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
                       {/* Content */}
                       <div className="relative z-10 pointer-events-none flex flex-col justify-center overflow-hidden">
                         {(comp.acts / agency.totalActs) > 0.15 && (
-                          <span className="text-[9px] font-semibold text-primary truncate leading-tight">
+                          <span className="text-[11px] font-semibold text-primary truncate leading-tight">
                             {comp.name}
                           </span>
                         )}
                         {(comp.acts / agency.totalActs) > 0.25 && (
                           <span className={cn(
-                            "text-[8px] font-medium truncate mt-0.5",
+                            "text-[10px] font-medium truncate mt-0.5",
                             comp.risk > 0 ? "text-danger font-bold" : "text-secondary"
                           )}>
-                            {comp.acts} acts {comp.risk > 0 ? `· ${comp.risk} risk` : ''}
+                            {comp.acts} acts {comp.risk > 0 ? `• ${comp.risk} risk` : ''}
                           </span>
                         )}
                       </div>
@@ -168,56 +169,56 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
                       {isHovered && (
                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-3 bg-canvas border border-subtle rounded-xl shadow-xl z-50 pointer-events-none animate-in fade-in duration-100 flex flex-col gap-2">
                           <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted mb-0.5 line-clamp-1">{agency.name}</p>
+                            <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5 line-clamp-1">{agency.name}</p>
                             <p className="text-xs font-semibold text-primary leading-tight line-clamp-2">{comp.name}</p>
                           </div>
                           
                           <div className="grid grid-cols-2 gap-y-2 gap-x-3 bg-surface p-2 rounded-lg">
                             <div>
-                              <p className="text-[9px] uppercase tracking-wider text-muted mb-0.5">Total</p>
-                              <p className="text-[10px] font-medium text-primary">{comp.acts} activities</p>
+                              <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5">Total</p>
+                              <p className="text-xs font-medium text-primary">{comp.acts} activities</p>
                             </div>
                             <div>
-                              <p className="text-[9px] uppercase tracking-wider text-muted mb-0.5">Completed</p>
-                              <p className="text-[10px] font-medium text-data-green">{comp.completed}</p>
+                              <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5">Completed</p>
+                              <p className="text-xs font-medium text-data-green">{comp.completed}</p>
                             </div>
                             <div>
-                              <p className="text-[9px] uppercase tracking-wider text-muted mb-0.5">In Progress</p>
-                              <p className="text-[10px] font-medium text-data-teal">{comp.inProgress}</p>
+                              <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5">In Progress</p>
+                              <p className="text-xs font-medium text-data-teal">{comp.inProgress}</p>
                             </div>
                             <div>
-                              <p className="text-[9px] uppercase tracking-wider text-muted mb-0.5">Delayed</p>
-                              <p className="text-[10px] font-medium text-amber-500">{comp.delayed}</p>
+                              <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5">Delayed</p>
+                              <p className="text-xs font-medium text-amber-500">{comp.delayed}</p>
                             </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-3 pt-1">
                             <div>
-                              <p className="text-[9px] uppercase tracking-wider text-muted mb-0.5">Est. Value</p>
-                              <p className="text-[10px] font-medium text-primary">₹{comp.value.toLocaleString('en-IN')}L</p>
+                              <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5">Est. Value</p>
+                              <p className="text-xs font-medium text-primary">₹{comp.value.toLocaleString('en-IN')}L</p>
                             </div>
                             {comp.risk > 0 && (
                               <div>
-                                <p className="text-[9px] uppercase tracking-wider text-muted mb-0.5">Value at Risk</p>
-                                <p className="text-[10px] font-bold text-danger">₹{comp.riskValue.toLocaleString('en-IN')}L</p>
+                                <p className="text-[11px] uppercase tracking-wider text-muted mb-0.5">Value at Risk</p>
+                                <p className="text-xs font-bold text-danger">₹{comp.riskValue.toLocaleString('en-IN')}L</p>
                               </div>
                             )}
                           </div>
 
                           <div className="pt-2 border-t border-subtle mt-1">
-                            <p className="text-[9px] uppercase tracking-wider text-muted mb-1">Activities</p>
+                            <p className="text-[11px] uppercase tracking-wider text-muted mb-1">Activities</p>
                             {comp.titles.map((t: string, i: number) => (
-                              <p key={i} className="text-[9px] text-secondary truncate mb-0.5">• {t}</p>
+                              <p key={i} className="text-[11px] text-secondary truncate mb-0.5">• {t}</p>
                             ))}
                             {comp.moreTitles > 0 && (
-                              <p className="text-[9px] text-muted italic mt-1">+ {comp.moreTitles} more</p>
+                              <p className="text-[11px] text-muted italic mt-1">+ {comp.moreTitles} more</p>
                             )}
                           </div>
                           
                           {comp.targetDates.length > 0 && (
                             <div className="pt-2 border-t border-subtle mt-1">
-                              <p className="text-[9px] uppercase tracking-wider text-muted mb-1">Target Dates</p>
-                              <p className="text-[9px] text-secondary line-clamp-2">
+                              <p className="text-[11px] uppercase tracking-wider text-muted mb-1">Target Dates</p>
+                              <p className="text-[11px] text-secondary line-clamp-2">
                                 {comp.targetDates.join(", ")}
                               </p>
                             </div>
@@ -231,11 +232,11 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
             </div>
 
             {/* Supporting Microcopy */}
-            <div className="hidden lg:flex w-36 xl:w-48 flex-shrink-0 items-center text-[9px] xl:text-[10px] text-muted font-medium pl-2 opacity-60 group-hover:opacity-100 transition-opacity">
+            <div className="hidden lg:flex w-36 xl:w-48 flex-shrink-0 items-center text-[11px] xl:text-xs text-muted font-medium pl-2 opacity-60 group-hover:opacity-100 transition-opacity">
               <span className="truncate">
-                {agency.totalActs} acts · ₹{agency.totalValue.toLocaleString('en-IN')}L
+                {agency.totalActs} acts • ₹{agency.totalValue.toLocaleString('en-IN')}L
                 {agency.totalRisk > 0 && (
-                  <span className="text-danger font-semibold ml-1">· {agency.totalRisk} risk</span>
+                  <span className="text-danger font-semibold ml-1">• {agency.totalRisk} risk</span>
                 )}
               </span>
             </div>

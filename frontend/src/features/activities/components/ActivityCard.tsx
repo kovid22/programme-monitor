@@ -1,6 +1,7 @@
 import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
 import { parseLocalDate } from '../../../lib/dateUtils';
+import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -8,7 +9,7 @@ interface ActivityCardProps {
 }
 
 export function ActivityCard({ activity, onClick }: ActivityCardProps) {
-  const isRisk = activity.timelineStatus === 'Overdue' || activity.timelineStatus === 'Immediate';
+  const isRisk = isEffectivelyAtRisk(activity);
   const targetDateStr = activity.targetDate ? parseLocalDate(activity.targetDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBC';
 
   return (

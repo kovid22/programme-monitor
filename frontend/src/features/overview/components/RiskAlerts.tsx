@@ -20,13 +20,13 @@ export function RiskAlerts({ activities }: { activities: Activity[] }) {
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-primary truncate group-hover:text-pastel-blue transition-colors">{activity.title}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] text-secondary truncate">{activity.component}</span>
+                  <span className="text-[11px] font-medium text-secondary truncate">{activity.component}</span>
                   <span className="w-1 h-1 rounded-full bg-subtle"></span>
-                  <span className="text-[10px] text-muted truncate">{activity.agency}</span>
+                  <span className="text-[11px] text-muted truncate">{activity.agency}</span>
                   {activity.targetDate && (
                     <>
                       <span className="w-1 h-1 rounded-full bg-subtle"></span>
-                      <span className="text-[10px] text-muted">Due {activity.targetDate}</span>
+                      <span className="text-[11px] text-muted">Due {activity.targetDate}</span>
                     </>
                   )}
                 </div>
@@ -38,7 +38,7 @@ export function RiskAlerts({ activities }: { activities: Activity[] }) {
           ))}
           {activities.length > 4 && (
             <div className="mt-1 pt-1 text-center">
-              <button className="text-[10px] font-medium text-secondary hover:text-primary transition-colors cursor-pointer">
+              <button className="text-xs font-medium text-secondary hover:text-primary transition-colors cursor-pointer">
                 + View all {activities.length} at risk
               </button>
             </div>

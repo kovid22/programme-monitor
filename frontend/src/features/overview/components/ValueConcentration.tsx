@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { Activity } from "../../../data/types";
+import { isEffectivelyAtRisk } from "../../../lib/statusUtils";
 
 interface ValueConcentrationProps {
   activities: Activity[];
@@ -18,7 +19,7 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
         map.set(a.component, { total: 0, atRisk: 0 });
       }
       
-      const isRisk = a.completionStatus !== "Completed" && (a.timelineStatus === "Overdue" || a.timelineStatus === "Immediate");
+      const isRisk = isEffectivelyAtRisk(a);
       
       map.get(a.component)!.total += val;
       if (isRisk) {
@@ -60,11 +61,11 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <div className="h-2.5 w-2.5 rounded-sm bg-pastel-blue"></div>
-            <span className="text-[10px] font-medium text-secondary uppercase tracking-wider">Secure Value</span>
+            <span className="text-xs font-medium text-muted uppercase tracking-wider">Secure Value</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="h-2.5 w-2.5 rounded-sm bg-danger"></div>
-            <span className="text-[10px] font-medium text-secondary uppercase tracking-wider">Value at Risk</span>
+            <span className="text-xs font-medium text-muted uppercase tracking-wider">Value at Risk</span>
           </div>
         </div>
       </div>
@@ -81,11 +82,11 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
                 <span className="text-xs font-medium text-primary">{item.workstream}</span>
                 <div className="flex items-center gap-2">
                   {item.atRisk > 0 && (
-                    <span className="text-[10px] font-medium text-danger">
+                    <span className="text-[11px] font-medium text-danger">
                       ₹{item.atRisk.toLocaleString('en-IN', { maximumFractionDigits: 1 })}L at risk ({Math.round(riskWidth)}%)
                     </span>
                   )}
-                  <span className="text-[10px] font-semibold text-primary">₹{item.total.toLocaleString('en-IN', { maximumFractionDigits: 1 })}L</span>
+                  <span className="text-xs font-semibold text-primary">₹{item.total.toLocaleString('en-IN', { maximumFractionDigits: 1 })}L</span>
                 </div>
               </div>
               
@@ -101,7 +102,7 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
                       style={{ width: `${secureWidth}%` }} 
                       className="h-full bg-pastel-blue border-r border-surface last:border-0 relative"
                     >
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-max px-2 py-1 bg-canvas border border-subtle rounded shadow-lg z-10 text-[9px]">
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-max px-2 py-1 bg-canvas border border-subtle rounded shadow-lg z-10 text-[11px]">
                         ₹{item.secure.toLocaleString('en-IN', { maximumFractionDigits: 1 })}L Secure
                       </div>
                     </div>
@@ -112,7 +113,7 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
                       style={{ width: `${riskWidth}%` }} 
                       className="h-full bg-danger border-r border-surface last:border-0 relative"
                     >
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-max px-2 py-1 bg-canvas border border-subtle rounded shadow-lg z-10 text-[9px] text-danger font-semibold">
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-max px-2 py-1 bg-canvas border border-subtle rounded shadow-lg z-10 text-[11px] text-danger font-semibold">
                         ₹{item.atRisk.toLocaleString('en-IN', { maximumFractionDigits: 1 })}L At Risk
                       </div>
                     </div>
@@ -124,7 +125,7 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
         })}
         {valueData.hiddenCount > 0 && (
           <div className="text-center pt-1 mt-1 border-t border-subtle/50">
-            <span className="text-[10px] font-medium text-secondary">
+            <span className="text-[11px] font-medium text-secondary">
               + {valueData.hiddenCount} more workstream{valueData.hiddenCount !== 1 ? 's' : ''}
             </span>
           </div>
