@@ -1,6 +1,6 @@
 {
   "name": "programme-monitor",
-  "version": "0.1.0",
+  "version": "0.5.13",
   "description": "A generic programme delivery analytics dashboard for operational tracking.",
   "private": true,
   "type": "module",

@@ -4,25 +4,43 @@
 ![Frontend](https://img.shields.io/badge/frontend-Azure%20Static%20Web%20Apps-blue)
 ![Backend](https://img.shields.io/badge/backend-Azure%20App%20Service-blue)
 
-Programme Monitor is a lightweight operational analytics dashboard for tracking programme delivery, deadlines, risk, and value concentration.
+Programme Monitor is a lightweight operational analytics dashboard for tracking programme delivery, deadlines, risks, completion, and estimated value.
 
-## Stack
+It uses Google Sheets as an accessible source of truth, with FastAPI handling validation and normalization before the data is visualized through a React dashboard.
 
-- React 19 + TypeScript
-- Vite
-- Tailwind CSS v4
-- FastAPI
-- Google Sheets
-- Azure Static Web Apps
-- Azure App Service
+## Preview
+
+![Programme Monitor Overview](docs/screenshots/light_mode_preview.png)
+
+For a detailed product walkthrough, see [`WalkThrough.md`](WalkThrough.md).
 
 ## Features
 
-- Programme overview and delivery metrics
-- Activity search, filtering, sorting, and detail view
-- Live programme data from Google Sheets
-- Manual data sync
-- Responsive light and dark interfaces
+- **Programme overview dashboard** with completion, risk, value, and delivery metrics
+- **Dashboard filtering** by Workstream, Sub-Workstream, and Agency
+- **Activity explorer** with search, filtering, and multi-dimensional sorting
+- **Activity detail drawer** for individual programme items
+- **Timeline health states** including Overdue, Immediate, Due Soon, On Track, and TBC
+- **Google Sheets integration** for live programme data
+- **Manual data sync** with server-side caching
+- **Responsive light and dark interfaces**
+
+## Tech Stack
+
+**Frontend**
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS v4
+- Lucide React
+
+**Backend & Infrastructure**
+- FastAPI
+- Python 3.14
+- Google Sheets API
+- Azure Static Web Apps
+- Azure App Service
+- GitHub Actions
 
 ## Architecture
 
@@ -36,7 +54,7 @@ React / Azure Static Web Apps
 
 ## Local Development
 
-Frontend:
+### Frontend
 
 ```bash
 cd frontend
@@ -44,18 +62,47 @@ npm install
 npm run dev
 ```
 
-Backend:
+### Backend
 
 ```bash
 cd backend
+python -m venv venv
+```
+
+Activate the environment:
+
+```bash
+source venv/bin/activate
+```
+
+Windows:
+
+```powershell
+venv\Scripts\activate
+```
+
+Then run:
+
+```bash
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Environment examples are provided in the frontend and backend `.env.example` files.
+Environment examples are provided in:
+
+```text
+frontend/.env.example
+backend/.env.example
+```
+
+## Documentation
+
+See [`WalkThrough.md`](WalkThrough.md) for a deeper look at the interface, user flows, filtering, visualizations, and design decisions.
 
 ## Status
 
-The core application and live-data pipeline are deployed.
+**v0.5.13** — core application and live-data pipeline deployed.
 
-Frontend refinement and documentation are ongoing.
+## License
+
+Licensed under the [MIT License](LICENSE).
