@@ -29,21 +29,24 @@ export function RiskAlerts({ activities, onNavigateToActivities, onOpenActivity 
                 className="flex w-full items-center justify-between gap-3 py-2.5 border-b border-subtle/50 last:border-0 hover:bg-elevated px-2 -mx-2 rounded-md transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-primary truncate">{activity.title}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs font-medium text-secondary truncate">{activity.component}</span>
+                  <p className="text-[15px] font-semibold text-primary truncate">{activity.title}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[13px] font-medium text-secondary truncate">{activity.component}</span>
                     <span className="w-1 h-1 rounded-full bg-subtle shrink-0"></span>
-                    <span className="text-xs text-muted truncate">{activity.agency}</span>
+                    <span className="text-[13px] text-muted truncate">{activity.agency}</span>
                     {activity.targetDate && (
                       <>
                         <span className="w-1 h-1 rounded-full bg-subtle shrink-0"></span>
-                        <span className="text-xs text-muted shrink-0">Due {parseLocalDate(activity.targetDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        <span className="text-[13px] text-muted shrink-0">Due {parseLocalDate(activity.targetDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                       </>
                     )}
                   </div>
                 </div>
                 <div className="flex-shrink-0 text-right pl-2">
-                  <span className={cn("text-xs font-medium", isRed ? "text-danger" : "text-primary")}>
+                  <span className={cn(
+                    "px-2 py-1 rounded text-[10px] font-bold tracking-wide uppercase",
+                    isRed ? "bg-danger/10 text-danger" : "bg-surface border border-subtle text-secondary"
+                  )}>
                     {activity.timelineStatus}
                   </span>
                 </div>

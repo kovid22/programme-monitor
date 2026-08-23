@@ -102,7 +102,7 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
         />
         <div className="flex flex-col">
           <span 
-            className="text-[12px] font-semibold text-secondary truncate max-w-[140px]" 
+            className="text-[13px] font-semibold text-secondary truncate max-w-[140px]" 
             title={item.name}
           >
             {item.name}
@@ -112,7 +112,7 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
               {Math.round(item.percentage)}%
             </span>
             <span 
-              className="text-[11px] font-medium transition-colors duration-300 whitespace-nowrap" 
+              className="text-[12px] font-medium transition-colors duration-300 whitespace-nowrap" 
               style={{ color: isHovered ? item.color : 'var(--color-muted)' }}
             >
               {item.completed} / {item.total}

@@ -22,6 +22,7 @@ app.add_middleware(
     expose_headers=["X-Data-Refreshed-At"],
 )
 
+
 class HealthResponse(BaseModel):
     status: str
 

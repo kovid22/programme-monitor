@@ -179,7 +179,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
               
               <div className="grid grid-cols-7 gap-1 mb-1.5">
                 {weekdays.map((day, i) => (
-                  <div key={i} className={`text-center text-[11px] font-semibold tracking-wider uppercase ${i === 6 ? 'text-red-600 dark:text-muted' : 'text-primary dark:text-muted'}`}>
+                  <div key={i} className={`text-center text-[11px] font-semibold tracking-wider uppercase ${i === 6 ? 'text-red-600 dark:text-red-500' : 'text-primary dark:text-white'}`}>
                     {day}
                   </div>
                 ))}
@@ -195,7 +195,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                   const isToday = dStr === todayStr;
                   const data = hoverDataMap.get(dStr);
                   
-                  let intensityClass = "bg-canvas border border-transparent";
+                  let intensityClass = "bg-canvas dark:bg-canvas/40 border border-transparent";
                   
                   if (data) {
                     const ratio = data.total / (maxDailyActivities || 1);
@@ -261,7 +261,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                       className={cn(
                         "relative aspect-square rounded-sm flex items-center justify-center transition-all duration-200",
                         intensityClass,
-                        !isToday && "text-secondary/50"
+                        !isToday && "text-secondary/50 dark:text-white/60"
                       )}
                     >
                       <span className="text-[11px] font-medium leading-none">
@@ -277,7 +277,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-5 pt-2 mt-1 text-xs text-secondary font-medium">
+      <div className="flex flex-wrap items-center justify-center gap-5 pt-2 mt-1 text-[13px] text-secondary font-medium">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-[2px] bg-state-completed"></span>
           Completed

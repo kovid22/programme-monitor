@@ -167,7 +167,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
       </div>
       
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-5 pt-6 mt-1 text-xs text-secondary font-medium">
+      <div className="flex flex-wrap items-center justify-center gap-5 pt-6 mt-1 text-[13px] text-secondary font-medium">
         {ORDER.map(state => (
           <div key={state} className="flex items-center gap-1.5">
             <span className={cn("w-2.5 h-2.5 rounded-full", STATE_CLASSES[state])} />
