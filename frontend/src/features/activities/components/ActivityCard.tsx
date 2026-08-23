@@ -2,6 +2,7 @@ import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
 import { parseLocalDate } from '../../../lib/dateUtils';
 import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
+import { formatCurrencyValue } from '../../../lib/utils';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -50,7 +51,7 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
         <div className="flex flex-col gap-0.5 items-end">
           <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Value</span>
           <span className="text-xs font-semibold text-primary">
-            {activity.estValue !== null && activity.estValue > 0 ? `₹${activity.estValue.toLocaleString('en-IN', { maximumFractionDigits: 1 })}L` : '-'}
+            {activity.estValue !== null && activity.estValue > 0 ? formatCurrencyValue(activity.estValue) : '-'}
           </span>
         </div>
       </div>

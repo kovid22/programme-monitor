@@ -3,6 +3,7 @@ import { cn } from "../../../lib/utils";
 import type { Activity } from "../../../data/types";
 import { calculateCalendarData, parseLocalDate } from "../../../lib/dateUtils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { formatCurrencyValue } from "../../../lib/utils";
 
 interface DeliveryCalendarProps {
   activities: Activity[];
@@ -135,7 +136,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4 z-10">
         <div>
-          <h3 className="text-sm font-semibold text-primary mb-1">Delivery Calendar</h3>
+          <h3 className="text-base font-semibold text-primary mb-1">Delivery Calendar</h3>
           <div className="flex flex-wrap items-center gap-4 text-xs text-muted font-normal">
             <span>{summary.deadlines} {summary.deadlines === 1 ? 'deadline' : 'deadlines'}</span>
             {summary.peak && (
@@ -178,7 +179,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
               
               <div className="grid grid-cols-7 gap-1 mb-1.5">
                 {weekdays.map((day, i) => (
-                  <div key={i} className="text-center text-[11px] font-semibold tracking-wider text-muted uppercase">
+                  <div key={i} className={`text-center text-[11px] font-semibold tracking-wider uppercase ${i === 6 ? 'text-red-600 dark:text-muted' : 'text-primary dark:text-muted'}`}>
                     {day}
                   </div>
                 ))}
@@ -204,25 +205,29 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                     else if (data.normal > 0) colorKey = 'normal';
                     
                     if (colorKey === 'risk') {
-                      if (ratio <= 0.25) intensityClass = "bg-data-red/30 text-danger";
-                      else if (ratio <= 0.5) intensityClass = "bg-data-red/50 text-danger";
-                      else if (ratio <= 0.75) intensityClass = "bg-data-red/75 text-danger";
-                      else intensityClass = "bg-data-red text-danger";
+                      if (ratio <= 0.25) intensityClass = `bg-state-risk/30 text-white dark:text-state-risk`;
+                      else if (ratio <= 0.5) intensityClass = `bg-state-risk/50 text-white dark:text-state-risk`;
+                      else if (ratio <= 0.75) intensityClass = `bg-state-risk/75 text-white dark:text-state-risk`;
+                      else intensityClass = `bg-state-risk text-white dark:text-primary`;
                     } else if (colorKey === 'normal') {
-                      if (ratio <= 0.25) intensityClass = "bg-data-periwinkle/30";
-                      else if (ratio <= 0.5) intensityClass = "bg-data-periwinkle/50";
-                      else if (ratio <= 0.75) intensityClass = "bg-data-periwinkle/75";
-                      else intensityClass = "bg-data-periwinkle";
+                      if (ratio <= 0.25) intensityClass = `bg-state-scheduled/30 text-white dark:text-state-scheduled`;
+                      else if (ratio <= 0.5) intensityClass = `bg-state-scheduled/50 text-white dark:text-state-scheduled`;
+                      else if (ratio <= 0.75) intensityClass = `bg-state-scheduled/75 text-white dark:text-state-scheduled`;
+                      else intensityClass = `bg-state-scheduled text-white dark:text-primary`;
                     } else {
-                      if (ratio <= 0.25) intensityClass = "bg-data-green/30 text-success";
-                      else if (ratio <= 0.5) intensityClass = "bg-data-green/50 text-success";
-                      else if (ratio <= 0.75) intensityClass = "bg-data-green/75 text-success";
-                      else intensityClass = "bg-data-green text-success";
+                      if (ratio <= 0.25) intensityClass = `bg-state-completed/30 text-white dark:text-state-completed`;
+                      else if (ratio <= 0.5) intensityClass = `bg-state-completed/50 text-white dark:text-state-completed`;
+                      else if (ratio <= 0.75) intensityClass = `bg-state-completed/75 text-white dark:text-state-completed`;
+                      else intensityClass = `bg-state-completed text-white dark:text-primary`;
                     }
                   }
 
                   if (isToday) {
-                    intensityClass += " ring-[1.5px] ring-muted ring-offset-2 ring-offset-surface";
+                    if (data) {
+                      intensityClass += " ring-[2px] ring-[#0084FF] ring-offset-2 ring-offset-surface";
+                    } else {
+                      intensityClass = "bg-[#0084FF] text-white shadow-sm z-10";
+                    }
                   }
 
                   if (data) {
@@ -232,8 +237,8 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                         key={dStr}
                         className={cn(
                           "relative aspect-square rounded-sm flex items-center justify-center transition-all duration-200",
-                          intensityClass,
-                          "cursor-pointer hover:opacity-80 shadow-sm z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
+                          "cursor-pointer hover:opacity-80 shadow-sm z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-surface",
+                          intensityClass
                         )}
                         onMouseEnter={(e) => handleMouseEnter(e, dStr)}
                         onMouseLeave={handleMouseLeave}
@@ -243,7 +248,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                         }}
                         onBlur={() => setHoveredDate(null)}
                       >
-                        <span className="text-[11px] font-medium leading-none text-primary">
+                        <span className="text-[11px] font-medium leading-none">
                           {dayObj.dayNum}
                         </span>
                       </button>
@@ -256,7 +261,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                       className={cn(
                         "relative aspect-square rounded-sm flex items-center justify-center transition-all duration-200",
                         intensityClass,
-                        "text-secondary/50"
+                        !isToday && "text-secondary/50"
                       )}
                     >
                       <span className="text-[11px] font-medium leading-none">
@@ -274,15 +279,15 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-5 pt-2 mt-1 text-xs text-secondary font-medium">
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-[2px] bg-data-green/75"></span>
+          <span className="w-2.5 h-2.5 rounded-[2px] bg-state-completed"></span>
           Completed
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-[2px] bg-data-red/75"></span>
+          <span className="w-2.5 h-2.5 rounded-[2px] bg-state-risk"></span>
           Overdue / Immediate
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-[2px] bg-data-periwinkle/75"></span>
+          <span className="w-2.5 h-2.5 rounded-[2px] bg-state-scheduled"></span>
           Due Soon / On Track
         </div>
       </div>
@@ -312,7 +317,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
             </div>
             <div>
               <p className="text-xs text-muted mb-0.5">Est. Value</p>
-              <p className="text-xs font-medium text-primary">₹{hoverDataMap.get(hoveredDate)!.val.toLocaleString('en-IN')}L</p>
+              <p className="text-xs font-medium text-primary">{formatCurrencyValue(hoverDataMap.get(hoveredDate)!.val)}</p>
             </div>
             <div>
               <p className="text-xs text-muted mb-0.5">Agencies</p>

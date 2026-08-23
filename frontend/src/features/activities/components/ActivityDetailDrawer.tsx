@@ -4,6 +4,7 @@ import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
 import { parseLocalDate } from '../../../lib/dateUtils';
 import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
+import { formatCurrencyValue } from '../../../lib/utils';
 
 interface ActivityDetailDrawerProps {
   activity: Activity | null;
@@ -108,7 +109,7 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Estimated Value</span>
                 <span className="text-sm font-medium text-primary">
-                  {activity.estValue !== null && activity.estValue > 0 ? `₹${activity.estValue.toLocaleString('en-IN', { maximumFractionDigits: 1 })} Lakhs` : 'Not Specified'}
+                  {activity.estValue !== null && activity.estValue > 0 ? formatCurrencyValue(activity.estValue) : 'Not Specified'}
                 </span>
               </div>
             </div>

@@ -11,7 +11,7 @@ export interface RiskAlertsProps {
 export function RiskAlerts({ activities, onNavigateToActivities, onOpenActivity }: RiskAlertsProps) {
   return (
     <div className="w-full h-full min-h-[280px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle">
-      <h3 className="text-sm font-semibold text-primary mb-4">Needs Attention</h3>
+      <h3 className="text-base font-semibold text-primary mb-4">Task Pending</h3>
       
       {activities.length === 0 ? (
         <div className="flex flex-1 items-center justify-center text-sm text-muted italic">

@@ -1,18 +1,18 @@
 import { useMemo, useState } from "react";
 import type { Activity } from "../../../data/types";
 import { getPresentationState } from "../../../lib/statusUtils";
-import { formatCurrencyValue } from "../../../lib/utils";
+import { formatCurrencyValue, cn } from "../../../lib/utils";
 import { PRESENTATION_STATES } from "../../../data/constants";
 
 interface DeliveryFlowProps {
   activities: Activity[];
 }
 
-const STATE_COLORS: Record<string, string> = {
-  [PRESENTATION_STATES.COMPLETED]: '#10b981',
-  [PRESENTATION_STATES.AT_RISK]: '#f43f5e',
-  [PRESENTATION_STATES.SCHEDULED]: '#6366f1',
-  [PRESENTATION_STATES.TBC]: '#94a3b8'
+const STATE_CLASSES: Record<string, string> = {
+  [PRESENTATION_STATES.COMPLETED]: 'bg-state-completed shadow-glow-completed',
+  [PRESENTATION_STATES.AT_RISK]: 'bg-state-risk shadow-glow-risk',
+  [PRESENTATION_STATES.SCHEDULED]: 'bg-state-scheduled shadow-glow-scheduled',
+  [PRESENTATION_STATES.TBC]: 'bg-state-tbc shadow-glow-tbc'
 };
 
 const ORDER = [
@@ -73,7 +73,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
   if (top5.length === 0) {
     return (
       <div className="w-full h-full min-h-[260px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle">
-        <h3 className="text-[14px] font-semibold text-primary tracking-wide mb-6">Workstream Value by Delivery State</h3>
+        <h3 className="text-base font-semibold text-primary tracking-wide mb-6">Value by Delivery State</h3>
         <div className="flex-1 flex items-center justify-center text-[13px] text-muted italic">
           No value data available
         </div>
@@ -86,21 +86,8 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
       className="w-full h-full min-h-[300px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle relative"
       onMouseLeave={() => { setHoveredSegment(null); setTooltip(null); }}
     >
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
-        <div className="flex flex-col">
-          <h3 className="text-[14px] font-semibold text-primary tracking-wide">Workstream Value by Delivery State</h3>
-        </div>
-        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-          {ORDER.map(state => (
-            <div key={state} className="flex items-center gap-1.5">
-              <div 
-                className="w-2.5 h-2.5 rounded-full" 
-                style={{ backgroundColor: STATE_COLORS[state] }} 
-              />
-              <span className="text-[12px] font-medium text-muted">{state}</span>
-            </div>
-          ))}
-        </div>
+      <div className="mb-8">
+        <h3 className="text-base font-semibold text-primary tracking-wide">Value by Delivery State</h3>
       </div>
 
       <div className="flex-1 flex flex-col justify-center gap-8 w-full pb-2">
@@ -128,7 +115,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
               </span>
             </div>
             
-            <div className="flex-1 h-[24px] bg-slate-100/70 dark:bg-slate-800/30 rounded-[4px] relative">
+            <div className="flex-1 h-[24px] bg-slate-100/70 dark:bg-slate-800/30 rounded-[6px] relative">
               <div 
                 className="absolute left-0 top-0 bottom-0 flex gap-[1px]"
                 style={{ width: `${(ws.total / maxVal) * 100}%` }}
@@ -143,11 +130,10 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
                   return (
                     <div
                       key={state}
-                      className="h-full cursor-pointer transition-opacity duration-150 ease-out rounded-[4px] shrink"
+                      className={cn("h-full cursor-pointer transition-opacity duration-150 ease-out rounded-[6px] shrink", STATE_CLASSES[state])}
                       style={{ 
                         flex: `0 1 ${pctOfWs}%`,
                         minWidth: '4px',
-                        backgroundColor: STATE_COLORS[state],
                         opacity: hoveredSegment ? (hoveredSegment === segmentId ? 1 : 0.25) : 1
                       }}
                       onMouseEnter={() => setHoveredSegment(segmentId)}
@@ -179,6 +165,16 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
           </div>
         )})}
       </div>
+      
+      {/* Legend */}
+      <div className="flex flex-wrap items-center justify-center gap-5 pt-6 mt-1 text-xs text-secondary font-medium">
+        {ORDER.map(state => (
+          <div key={state} className="flex items-center gap-1.5">
+            <span className={cn("w-2.5 h-2.5 rounded-full", STATE_CLASSES[state])} />
+            {state}
+          </div>
+        ))}
+      </div>
 
       {/* Tooltip Overlay */}
       {tooltip && (
@@ -188,7 +184,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
         >
           <span className="text-[11px] font-semibold tracking-wider text-muted uppercase mb-1">{tooltip.ws}</span>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATE_COLORS[tooltip.state] }} />
+            <div className={cn("w-2 h-2 rounded-full", STATE_CLASSES[tooltip.state])} />
             <span className="text-[13px] font-medium text-primary">{tooltip.state}</span>
           </div>
           <div className="flex items-baseline justify-between gap-4 border-t border-subtle pt-2 mt-1">

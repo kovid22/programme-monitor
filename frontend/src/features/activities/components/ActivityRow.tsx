@@ -2,6 +2,7 @@ import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
 import { parseLocalDate } from '../../../lib/dateUtils';
 import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
+import { formatCurrencyValue } from '../../../lib/utils';
 
 interface ActivityRowProps {
   activity: Activity;
@@ -43,7 +44,7 @@ export function ActivityRow({ activity, onClick }: ActivityRowProps) {
       {/* Value */}
       <div className="col-span-1 flex justify-end items-center pr-2">
         <span className="text-xs font-semibold text-primary whitespace-nowrap">
-          {activity.estValue !== null && activity.estValue > 0 ? `₹${activity.estValue.toLocaleString('en-IN', { maximumFractionDigits: 1 })}L` : '-'}
+          {activity.estValue !== null && activity.estValue > 0 ? formatCurrencyValue(activity.estValue) : '-'}
         </span>
       </div>
 

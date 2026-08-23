@@ -38,27 +38,34 @@ export function Badge({ className, variant = "default", children, ...props }: Ba
 }
 
 export function StatusBadge({ status, className }: { status: TimelineStatus | CompletionStatus; className?: string }) {
-  let variant: BadgeProps["variant"] = "neutral";
+  let colorClass = "text-secondary";
+  let bgClass = "bg-secondary";
   
   switch (status) {
     case "On Track":
-    case "Completed":
-      variant = "success";
-      break;
     case "Due Soon":
     case "In Progress":
-      variant = "warning";
+      bgClass = "bg-state-scheduled";
+      break;
+    case "Completed":
+      bgClass = "bg-state-completed";
       break;
     case "Immediate":
     case "Overdue":
     case "Delayed":
-      variant = "danger";
+      colorClass = "text-danger"; // Preserve explicit risk warning for readability
+      bgClass = "bg-state-risk";
       break;
     case "TBC":
     case "Not Started":
-      variant = "neutral";
+      bgClass = "bg-state-tbc shadow-glow-tbc";
       break;
   }
 
-  return <Badge variant={variant} className={className}>{status}</Badge>;
+  return (
+    <div className={cn("inline-flex items-center gap-2 text-xs font-medium", colorClass, className)}>
+      <span className={cn("h-1.5 w-1.5 rounded-full", bgClass)} />
+      {status}
+    </div>
+  );
 }
