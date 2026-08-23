@@ -17,7 +17,12 @@ export interface ActivitiesResponse {
   count: number;
 }
 
-export async function fetchActivities(): Promise<Activity[]> {
+export interface FetchResult {
+  activities: Activity[];
+  refreshedAt: string | null;
+}
+
+export async function fetchActivities(forceRefresh: boolean = false): Promise<FetchResult> {
   let baseUrl = import.meta.env.VITE_API_BASE_URL;
   
   if (!baseUrl) {
@@ -28,15 +33,17 @@ export async function fetchActivities(): Promise<Activity[]> {
     }
   }
   
-  const response = await fetch(`${baseUrl}/api/activities`);
+  const url = forceRefresh ? `${baseUrl}/api/activities?force_refresh=true` : `${baseUrl}/api/activities`;
+  const response = await fetch(url);
   
   if (!response.ok) {
     throw new Error('Failed to fetch activities');
   }
   
+  const refreshedAt = response.headers.get('X-Data-Refreshed-At');
   const data: ActivitiesResponse = await response.json();
   
-  return data.activities.map(act => ({
+  const mappedActivities = data.activities.map(act => ({
     id: act.id,
     component: act.workstream,
     subComponent: act.subWorkstream,
@@ -47,4 +54,6 @@ export async function fetchActivities(): Promise<Activity[]> {
     timelineStatus: act.timelineStatus as TimelineStatus,
     completionStatus: act.completionStatus as CompletionStatus
   }));
+
+  return { activities: mappedActivities, refreshedAt };
 }

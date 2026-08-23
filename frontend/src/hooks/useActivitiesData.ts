@@ -4,15 +4,19 @@ import { fetchActivities } from '../api/activities';
 
 export function useActivitiesData() {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (forceRefresh = false) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchActivities();
-      setActivities(data);
+      const { activities: newActivities, refreshedAt: newRefreshedAt } = await fetchActivities(forceRefresh);
+      setActivities(newActivities);
+      if (newRefreshedAt) {
+        setRefreshedAt(newRefreshedAt);
+      }
     } catch {
       setError('Unable to load programme data.');
     } finally {
@@ -29,6 +33,7 @@ export function useActivitiesData() {
     activities,
     isLoading,
     error,
-    refresh: loadData
+    refresh: loadData,
+    refreshedAt
   };
 }

@@ -1,27 +1,22 @@
 import type { Activity } from "../data/types";
-
-export type PresentationState = 'completed' | 'risk' | 'upcoming' | 'normal' | 'tbc';
+import { PRESENTATION_STATES, type PresentationState } from "../data/constants";
 
 export function getPresentationState(activity: Activity): PresentationState {
   if (activity.completionStatus === 'Completed') {
-    return 'completed';
+    return PRESENTATION_STATES.COMPLETED;
   }
   
   if (activity.timelineStatus === 'Overdue' || activity.timelineStatus === 'Immediate') {
-    return 'risk';
+    return PRESENTATION_STATES.AT_RISK;
   }
   
-  if (activity.timelineStatus === 'Due Soon') {
-    return 'upcoming';
+  if (activity.timelineStatus === 'Due Soon' || activity.timelineStatus === 'On Track') {
+    return PRESENTATION_STATES.SCHEDULED;
   }
   
-  if (activity.timelineStatus === 'On Track') {
-    return 'normal';
-  }
-  
-  return 'tbc';
+  return PRESENTATION_STATES.TBC;
 }
 
 export function isEffectivelyAtRisk(activity: Activity): boolean {
-  return getPresentationState(activity) === 'risk';
+  return getPresentationState(activity) === PRESENTATION_STATES.AT_RISK;
 }

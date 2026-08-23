@@ -50,7 +50,21 @@ def normalize_completion_status(val: str) -> str:
     else:
         raise ValueError(f"Invalid completion status: {val}")
 
-def fetch_activities() -> List[Activity]:
+import threading
+import time
+from datetime import datetime, timezone, timedelta
+
+class ActivityCache:
+    def __init__(self, ttl: int = 180):
+        self.ttl = ttl
+        self.data: Optional[List[Activity]] = None
+        self.timestamp: float = 0.0
+        self.iso_timestamp: Optional[str] = None
+        self.lock = threading.Lock()
+
+_cache = ActivityCache(180)
+
+def _fetch_from_google_sheets() -> List[Activity]:
     if not settings.GOOGLE_SHEET_ID:
         raise ValueError("GOOGLE_SHEET_ID is not configured.")
         
@@ -137,3 +151,34 @@ def fetch_activities() -> List[Activity]:
         ))
         
     return activities
+
+def fetch_activities_with_timestamp(force_refresh: bool = False) -> tuple[List[Activity], Optional[str]]:
+    if not force_refresh:
+        # Fast path lock-free read
+        with _cache.lock:
+            if _cache.data is not None and (time.time() - _cache.timestamp) < _cache.ttl:
+                return _cache.data, _cache.iso_timestamp
+                
+    with _cache.lock:
+        # Double check in case another thread just populated it
+        if not force_refresh:
+            if _cache.data is not None and (time.time() - _cache.timestamp) < _cache.ttl:
+                return _cache.data, _cache.iso_timestamp
+                
+        # Fetch fresh
+        try:
+            fresh_data = _fetch_from_google_sheets()
+            _cache.data = fresh_data
+            _cache.timestamp = time.time()
+            _cache.iso_timestamp = datetime.now(timezone(timedelta(hours=5, minutes=30))).isoformat()
+            return fresh_data, _cache.iso_timestamp
+        except Exception:
+            if force_refresh and _cache.data is not None:
+                # If force refresh fails but we have stale data, we raise the exception
+                # to let the caller handle it, but we preserve the existing _cache.data
+                pass
+            raise
+
+def fetch_activities(force_refresh: bool = False) -> List[Activity]:
+    return fetch_activities_with_timestamp(force_refresh)[0]
+

@@ -1,12 +1,12 @@
 import logging
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 
 from app.config import settings
 from app.models import Activity
-from app.services.google_sheets import fetch_activities
+from app.services.google_sheets import fetch_activities_with_timestamp
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,6 +19,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Data-Refreshed-At"],
 )
 
 class HealthResponse(BaseModel):
@@ -33,9 +34,11 @@ def health_check():
     return {"status": "ok"}
 
 @app.get("/api/activities", response_model=ActivitiesResponse)
-def get_activities():
+def get_activities(response: Response, force_refresh: bool = False):
     try:
-        activities = fetch_activities()
+        activities, refreshed_at = fetch_activities_with_timestamp(force_refresh=force_refresh)
+        if refreshed_at:
+            response.headers["X-Data-Refreshed-At"] = refreshed_at
         return {"activities": activities, "count": len(activities)}
     except ValueError as e:
         logger.error(f"Configuration or validation error: {e}")

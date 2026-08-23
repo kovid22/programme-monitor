@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { cn } from "../../../lib/utils";
 import type { Activity } from "../../../data/types";
 import { calculateCalendarData, parseLocalDate } from "../../../lib/dateUtils";
@@ -23,6 +23,83 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
   } = useMemo(() => {
     return calculateCalendarData(activities, windowStart);
   }, [activities, windowStart]);
+
+  const triggerElRef = useRef<HTMLElement | null>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const updatePopupPosition = () => {
+    if (!popupRef.current || !triggerElRef.current) return;
+    const el = popupRef.current;
+    const triggerRect = triggerElRef.current.getBoundingClientRect();
+    
+    const width = el.offsetWidth || 256; // fallback for w-64
+    const height = el.offsetHeight || 150;
+    
+    const gap = 10;
+    let left = triggerRect.right + gap;
+    let top = triggerRect.top;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Flip left if overflowing right
+    if (left + width > vw - 16) {
+      left = triggerRect.left - width - gap;
+      if (left < 16) left = 16; // final safety clamp
+    }
+
+    // Clamp vertically
+    if (top + height > vh - 16) {
+      top = vh - height - 16;
+    }
+    if (top < 16) {
+      top = 16;
+    }
+
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    el.style.visibility = 'visible';
+  };
+
+  useEffect(() => {
+    if (hoveredDate) {
+      updatePopupPosition();
+      requestAnimationFrame(updatePopupPosition);
+    }
+  }, [hoveredDate]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && hoveredDate) {
+        setHoveredDate(null);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [hoveredDate]);
+
+  const handleMouseEnter = (e: React.MouseEvent, dStr: string) => {
+    if (hideTimeout.current) clearTimeout(hideTimeout.current);
+    triggerElRef.current = e.currentTarget as HTMLElement;
+    setHoveredDate(dStr);
+  };
+
+  const handleMouseLeave = () => {
+    hideTimeout.current = setTimeout(() => {
+      setHoveredDate(null);
+    }, 120);
+  };
+
+  const handlePopupMouseEnter = () => {
+    if (hideTimeout.current) clearTimeout(hideTimeout.current);
+  };
+
+  const handlePopupMouseLeave = () => {
+    hideTimeout.current = setTimeout(() => {
+      setHoveredDate(null);
+    }, 120);
+  };
 
   const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -158,9 +235,12 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                           intensityClass,
                           "cursor-pointer hover:opacity-80 shadow-sm z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
                         )}
-                        onMouseEnter={() => setHoveredDate(dStr)}
-                        onMouseLeave={() => setHoveredDate(null)}
-                        onFocus={() => setHoveredDate(dStr)}
+                        onMouseEnter={(e) => handleMouseEnter(e, dStr)}
+                        onMouseLeave={handleMouseLeave}
+                        onFocus={(e) => {
+                          triggerElRef.current = e.currentTarget as HTMLElement;
+                          setHoveredDate(dStr);
+                        }}
                         onBlur={() => setHoveredDate(null)}
                       >
                         <span className="text-[11px] font-medium leading-none text-primary">
@@ -208,7 +288,13 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
       </div>
 
       {hoveredDate && hoverDataMap.has(hoveredDate) && (
-        <div className="absolute bottom-6 left-6 p-3.5 bg-canvas border border-subtle rounded-xl shadow-md z-50 w-64 pointer-events-none animate-in fade-in duration-100">
+        <div 
+          ref={popupRef}
+          className="fixed p-3.5 bg-canvas border border-subtle rounded-xl shadow-md z-[100] w-64 animate-in fade-in slide-in-from-bottom-[2px] duration-150 ease-out"
+          style={{ visibility: 'hidden' }}
+          onMouseEnter={handlePopupMouseEnter}
+          onMouseLeave={handlePopupMouseLeave}
+        >
           <p className="text-sm font-semibold text-primary mb-2.5">
             {parseLocalDate(hoveredDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>

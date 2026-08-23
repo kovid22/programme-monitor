@@ -7,11 +7,39 @@ import { useActivitiesData } from "./hooks/useActivitiesData";
 
 type View = "overview" | "activities";
 
+function formatRefreshedAt(isoString: string | null) {
+  if (!isoString) return "Not yet refreshed";
+  const d = new Date(isoString);
+  const now = new Date();
+
+  const dateOptions: Intl.DateTimeFormatOptions = { timeZone: 'Asia/Kolkata', year: 'numeric', month: 'numeric', day: 'numeric' };
+  const dDate = new Intl.DateTimeFormat('en-IN', dateOptions).format(d);
+  const nowDate = new Intl.DateTimeFormat('en-IN', dateOptions).format(now);
+  const isToday = dDate === nowDate;
+
+  const timeOptions: Intl.DateTimeFormatOptions = {
+    timeZone: 'Asia/Kolkata',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  };
+
+  if (!isToday) {
+    timeOptions.day = 'numeric';
+    timeOptions.month = 'short';
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-IN', timeOptions);
+  let formatted = formatter.format(d);
+  formatted = formatted.replace('am', 'AM').replace('pm', 'PM');
+  return `Last refreshed ${formatted} IST`;
+}
+
 function App() {
   const [isDark, setIsDark] = useState(false);
   const [activeView, setActiveView] = useState<View>("overview");
   const [initialFilters, setInitialFilters] = useState<{ timelineStatus?: string[] } | null>(null);
-  const { activities, isLoading, error, refresh } = useActivitiesData();
+  const { activities, isLoading, error, refresh, refreshedAt } = useActivitiesData();
 
   const handleNavigateToActivities = (filters?: { timelineStatus?: string[] }) => {
     if (filters) {
@@ -37,10 +65,13 @@ function App() {
             <div className="h-6 w-6 rounded bg-brand shadow-sm shadow-brand/20"></div>
             <span className="font-semibold tracking-wide text-sm text-primary">Programme Monitor</span>
           </div>
-          <div className="flex items-center gap-1 md:hidden">
+          <div className="flex items-center gap-2 md:hidden">
+            <span className="text-xs text-muted opacity-60 leading-tight text-right hidden sm:block">
+              {formatRefreshedAt(refreshedAt)}
+            </span>
             <button 
               type="button"
-              onClick={refresh}
+              onClick={() => refresh(true)}
               disabled={isLoading}
               className="p-2 text-secondary hover:text-primary transition-colors rounded-lg hover:bg-surface/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label="Sync data"
@@ -88,15 +119,20 @@ function App() {
         </nav>
 
         <div className="hidden md:flex flex-col gap-1 mt-auto">
-          <button 
-            type="button"
-            onClick={refresh}
-            disabled={isLoading}
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-secondary hover:text-primary hover:bg-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            <RefreshCw size={16} className={cn("text-muted", isLoading && "animate-spin")} />
-            Sync Data
-          </button>
+          <div className="flex flex-col gap-1 mb-2">
+            <button 
+              type="button"
+              onClick={() => refresh(true)}
+              disabled={isLoading}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-secondary hover:text-primary hover:bg-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <RefreshCw size={16} className={cn("text-muted", isLoading && "animate-spin")} />
+              Sync Data
+            </button>
+            <span className="text-xs text-muted px-3 leading-tight opacity-60">
+              {formatRefreshedAt(refreshedAt)}
+            </span>
+          </div>
           <button 
             type="button"
             onClick={() => setIsDark(!isDark)}
@@ -121,7 +157,7 @@ function App() {
               <AlertCircle size={32} className="text-danger mb-4 opacity-80" />
               <p className="text-primary font-medium mb-4">{error}</p>
               <button 
-                onClick={refresh}
+                onClick={() => refresh(false)}
                 className="px-4 py-2 bg-surface text-primary border border-subtle rounded-lg text-sm font-medium hover:bg-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 Retry
