@@ -78,7 +78,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
 
   if (agenciesData.length === 0) {
     return (
-      <div className="w-full h-full min-h-[260px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col">
+      <div className="w-full h-full min-h-[260px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle">
         <h3 className="text-sm font-semibold text-primary mb-6">Delivery Flow</h3>
         <div className="flex-1 flex items-center justify-center text-sm text-muted italic">
           No activities match the current filters.
@@ -88,7 +88,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
   }
 
   return (
-    <div className="w-full h-full min-h-[260px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col relative">
+    <div className="w-full h-full min-h-[260px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col relative shadow-sm border border-subtle">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 z-10">
         <h3 className="text-sm font-semibold text-primary">Delivery Flow</h3>
         

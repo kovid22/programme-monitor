@@ -53,7 +53,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
   }
 
   return (
-    <div className="w-full h-full min-h-[240px] bg-surface rounded-[20px] p-4 lg:p-5 flex flex-col relative overflow-hidden">
+    <div className="w-full h-full min-h-[240px] bg-surface rounded-[20px] p-4 lg:p-5 flex flex-col relative overflow-hidden shadow-sm border border-subtle">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4 z-10">
