@@ -3,22 +3,21 @@ import type { Activity } from "../../../data/types";
 import { isEffectivelyAtRisk } from "../../../lib/statusUtils";
 
 export function useOverviewFilters(activities: Activity[]) {
-  const [selectedAgency, setSelectedAgency] = useState<string[]>([]);
-  const [selectedSubComponent, setSelectedSubComponent] = useState<string[]>([]);
-  const [selectedTimeline, setSelectedTimeline] = useState<string[]>([]);
+  const [workstream, setWorkstream] = useState<string[]>([]);
+  const [subWorkstream, setSubWorkstream] = useState<string[]>([]);
+  const [agency, setAgency] = useState<string[]>([]);
 
   const filteredActivities = useMemo(() => {
     return activities.filter((activity: Activity) => {
-      // Agency match (comma separated)
+      const wMatch = workstream.length === 0 || workstream.includes(activity.component);
+      const swMatch = subWorkstream.length === 0 || subWorkstream.includes(activity.subComponent);
+      
       const activityAgencies = activity.agency.split(",").map((a: string) => a.trim());
-      const agencyMatch = selectedAgency.length === 0 || selectedAgency.some(ag => activityAgencies.includes(ag));
+      const aMatch = agency.length === 0 || agency.some(ag => activityAgencies.includes(ag));
       
-      const subCompMatch = selectedSubComponent.length === 0 || selectedSubComponent.includes(activity.subComponent);
-      const timelineMatch = selectedTimeline.length === 0 || selectedTimeline.includes(activity.timelineStatus);
-      
-      return agencyMatch && subCompMatch && timelineMatch;
+      return wMatch && swMatch && aMatch;
     });
-  }, [activities, selectedAgency, selectedSubComponent, selectedTimeline]);
+  }, [activities, workstream, subWorkstream, agency]);
 
   // Derived Metrics
   const totalActivities = filteredActivities.length;
@@ -31,21 +30,33 @@ export function useOverviewFilters(activities: Activity[]) {
   const totalEstValueAtRisk = atRiskActivities.reduce((sum: number, a: Activity) => sum + (a.estValue || 0), 0);
 
   // Available Filter Options
+  const availableWorkstreams = useMemo(() => {
+    const set = new Set(activities.map(a => a.component));
+    return Array.from(set).sort();
+  }, [activities]);
+
+  const availableSubWorkstreams = useMemo(() => {
+    // If workstreams are selected, only show subworkstreams for those workstreams
+    const filteredForSub = workstream.length > 0 
+      ? activities.filter(a => workstream.includes(a.component))
+      : activities;
+    const set = new Set(filteredForSub.map(a => a.subComponent));
+    return Array.from(set).sort();
+  }, [activities, workstream]);
+
   const availableAgencies = useMemo(() => {
     const agencies = new Set<string>();
     activities.forEach((a: Activity) => {
       a.agency.split(",").forEach((ag: string) => agencies.add(ag.trim()));
     });
-    return ["All", ...Array.from(agencies).sort()];
+    return Array.from(agencies).sort();
   }, [activities]);
 
-  const availableSubComponents = useMemo(() => {
-    const subComps = new Set<string>();
-    activities.forEach((a: Activity) => subComps.add(a.subComponent));
-    return ["All", ...Array.from(subComps).sort()];
-  }, [activities]);
-
-  const availableTimelines = ["All", "Overdue", "Immediate", "Due Soon", "On Track", "TBC"];
+  const resetFilters = () => {
+    setWorkstream([]);
+    setSubWorkstream([]);
+    setAgency([]);
+  };
 
   return {
     filteredActivities,
@@ -57,15 +68,18 @@ export function useOverviewFilters(activities: Activity[]) {
       totalEstValueAtRisk
     },
     filters: {
-      selectedAgency,
-      setSelectedAgency,
+      workstream,
+      setWorkstream,
+      availableWorkstreams,
+      subWorkstream,
+      setSubWorkstream,
+      availableSubWorkstreams,
+      agency,
+      setAgency,
       availableAgencies,
-      selectedSubComponent,
-      setSelectedSubComponent,
-      availableSubComponents,
-      selectedTimeline,
-      setSelectedTimeline,
-      availableTimelines
+      resetFilters,
+      totalCount: activities.length,
+      filteredCount: totalActivities
     }
   };
 }

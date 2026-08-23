@@ -6,9 +6,10 @@ interface ActivityListProps {
   activities: Activity[];
   onActivityClick: (a: Activity) => void;
   resetFilters: () => void;
+  hasActiveFilters?: boolean;
 }
 
-export function ActivityList({ activities, onActivityClick, resetFilters }: ActivityListProps) {
+export function ActivityList({ activities, onActivityClick, resetFilters, hasActiveFilters }: ActivityListProps) {
   if (activities.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-canvas rounded-2xl border border-subtle">
@@ -21,9 +22,9 @@ export function ActivityList({ activities, onActivityClick, resetFilters }: Acti
         </p>
         <button
           onClick={resetFilters}
-          className="px-4 py-2 bg-primary text-inverted text-sm font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas focus-visible:ring-primary"
+          className="px-4 py-2 bg-surface hover:bg-elevated text-primary border border-subtle text-sm font-medium rounded-lg transition-colors focus:outline-none"
         >
-          Reset Filters
+          {hasActiveFilters ? 'Clear search & filters' : 'Clear search'}
         </button>
       </div>
     );

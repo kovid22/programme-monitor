@@ -1,6 +1,6 @@
 # Programme Monitor
 
-![Version](https://img.shields.io/badge/version-v0.5.12-black)
+![Version](https://img.shields.io/badge/version-v0.5.13-black)
 ![Frontend](https://img.shields.io/badge/frontend-Azure%20Static%20Web%20Apps-blue)
 ![Backend](https://img.shields.io/badge/backend-Azure%20App%20Service-blue)
 

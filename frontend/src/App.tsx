@@ -179,6 +179,10 @@ function App() {
             </>
           )}
 
+          {/* Footer */}
+          <footer className="mt-auto pt-16 pb-4 text-center text-[13px] text-muted">
+            © 2026 kovid22 · Programme Monitor · <a href="https://github.com/kovid22/programme-monitor/blob/main/LICENSE" target="_blank" rel="noreferrer" className="hover:text-secondary hover:underline underline-offset-2 transition-colors">MIT License</a>
+          </footer>
         </div>
       </main>
     </div>
