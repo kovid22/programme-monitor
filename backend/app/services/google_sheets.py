@@ -1,6 +1,7 @@
 import logging
 from typing import List, Optional
 
+from google.auth import default as default_credentials
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -15,16 +16,18 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
 def get_sheets_service():
     info = settings.service_account_info
-    if not info:
-        raise ValueError("Google Service Account configuration is missing or invalid.")
-    
+
     try:
-        creds = Credentials.from_service_account_info(info, scopes=SCOPES)
+        creds = (
+            Credentials.from_service_account_info(info, scopes=SCOPES)
+            if info
+            else default_credentials(scopes=SCOPES)[0]
+        )
         service = build('sheets', 'v4', credentials=creds)
         return service
-    except Exception as e:
-        logger.error(f"Failed to build credentials: {e}")
-        raise ValueError("Invalid Google Service Account credentials.")
+    except Exception as exc:
+        logger.error("Failed to initialize Google Sheets credentials.")
+        raise ValueError("Unable to initialize Google Sheets credentials.") from exc
 
 def parse_estimated_value(val: str) -> Optional[float]:
     if not val:
