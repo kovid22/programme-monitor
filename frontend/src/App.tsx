@@ -42,7 +42,7 @@ function AppContent() {
   const [isDark, setIsDark] = useState(false);
   const [activeView, setActiveView] = useState<View>("overview");
   const [initialFilters, setInitialFilters] = useState<{ timelineStatus?: string[] } | null>(null);
-  const { activities, isLoading, error, refresh, refreshedAt } = useActivitiesData();
+  const { activities, isLoading, error, refresh, refreshedAt } = useActivitiesData(logOut);
 
   const handleNavigateToActivities = (filters?: { timelineStatus?: string[] }) => {
     if (filters) {
@@ -195,7 +195,7 @@ function AppContent() {
               {error && (
                 <div className="mb-6 p-3 bg-danger/10 border border-danger/20 rounded-lg flex items-center gap-3 text-sm text-danger">
                   <AlertCircle size={16} />
-                  <span>Unable to refresh data. Showing previously loaded activities.</span>
+                  <span>{error}</span>
                 </div>
               )}
               {activeView === "overview" ? (
