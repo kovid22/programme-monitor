@@ -9,6 +9,21 @@ interface DeliveryCalendarProps {
   activities: Activity[];
 }
 
+const activityStatusPresentation = {
+  risk: {
+    label: "Overdue / Immediate",
+    className: "bg-state-risk/15 text-danger border-state-risk/30"
+  },
+  scheduled: {
+    label: "Due Soon / On Track",
+    className: "bg-state-scheduled/15 text-state-scheduled border-state-scheduled/30"
+  },
+  completed: {
+    label: "Completed",
+    className: "bg-state-completed/15 text-state-completed border-state-completed/30"
+  }
+} as const;
+
 export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
   const [windowStart, setWindowStart] = useState<string | undefined>(undefined);
@@ -17,7 +32,6 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
     monthsData,
     summary,
     hoverDataMap,
-    maxDailyActivities,
     todayStr,
     availableMonths,
     currentWindowStart
@@ -198,28 +212,9 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                   let intensityClass = "bg-canvas dark:bg-canvas/40 border border-transparent";
                   
                   if (data) {
-                    const ratio = data.total / (maxDailyActivities || 1);
-                    
-                    let colorKey = 'completed';
-                    if (data.risk > 0) colorKey = 'risk';
-                    else if (data.normal > 0) colorKey = 'normal';
-                    
-                    if (colorKey === 'risk') {
-                      if (ratio <= 0.25) intensityClass = `bg-state-risk/30 text-white dark:text-state-risk`;
-                      else if (ratio <= 0.5) intensityClass = `bg-state-risk/50 text-white dark:text-state-risk`;
-                      else if (ratio <= 0.75) intensityClass = `bg-state-risk/75 text-white dark:text-state-risk`;
-                      else intensityClass = `bg-state-risk text-white dark:text-primary`;
-                    } else if (colorKey === 'normal') {
-                      if (ratio <= 0.25) intensityClass = `bg-state-scheduled/30 text-white dark:text-state-scheduled`;
-                      else if (ratio <= 0.5) intensityClass = `bg-state-scheduled/50 text-white dark:text-state-scheduled`;
-                      else if (ratio <= 0.75) intensityClass = `bg-state-scheduled/75 text-white dark:text-state-scheduled`;
-                      else intensityClass = `bg-state-scheduled text-white dark:text-primary`;
-                    } else {
-                      if (ratio <= 0.25) intensityClass = `bg-state-completed/30 text-white dark:text-state-completed`;
-                      else if (ratio <= 0.5) intensityClass = `bg-state-completed/50 text-white dark:text-state-completed`;
-                      else if (ratio <= 0.75) intensityClass = `bg-state-completed/75 text-white dark:text-state-completed`;
-                      else intensityClass = `bg-state-completed text-white dark:text-primary`;
-                    }
+                    if (data.risk > 0) intensityClass = "bg-state-risk text-white";
+                    else if (data.normal > 0) intensityClass = "bg-state-scheduled text-white";
+                    else intensityClass = "bg-state-completed text-white";
                   }
 
                   if (isToday) {
@@ -240,6 +235,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                           "cursor-pointer hover:opacity-80 shadow-sm z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-surface",
                           intensityClass
                         )}
+                        aria-label={`${parseLocalDate(dStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}: ${data.total} ${data.total === 1 ? 'activity' : 'activities'} due`}
                         onMouseEnter={(e) => handleMouseEnter(e, dStr)}
                         onMouseLeave={handleMouseLeave}
                         onFocus={(e) => {
@@ -251,6 +247,14 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                         <span className="text-[11px] font-medium leading-none">
                           {dayObj.dayNum}
                         </span>
+                        {data.total > 1 && (
+                          <span
+                            aria-hidden="true"
+                            className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-canvas text-primary border border-subtle shadow-sm flex items-center justify-center text-[9px] font-semibold leading-none"
+                          >
+                            {data.total}
+                          </span>
+                        )}
                       </button>
                     );
                   }
@@ -295,7 +299,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
       {hoveredDate && hoverDataMap.has(hoveredDate) && (
         <div 
           ref={popupRef}
-          className="fixed p-3.5 bg-canvas border border-subtle rounded-xl shadow-md z-[100] w-64 animate-in fade-in slide-in-from-bottom-[2px] duration-150 ease-out"
+          className="fixed p-3.5 bg-canvas border border-subtle rounded-xl shadow-md z-[100] w-64 max-h-[calc(100vh-2rem)] overflow-y-auto animate-in fade-in slide-in-from-bottom-[2px] duration-150 ease-out"
           style={{ visibility: 'hidden' }}
           onMouseEnter={handlePopupMouseEnter}
           onMouseLeave={handlePopupMouseLeave}
@@ -327,13 +331,19 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
           
           <div className="pt-2 mt-1">
             <p className="text-xs text-muted mb-1.5">Activities</p>
-            <div className="flex flex-col gap-1">
-              {hoverDataMap.get(hoveredDate)!.titles.map((t: string, i: number) => (
-                <p key={i} className="text-xs text-secondary truncate">• {t}</p>
-              ))}
-              {hoverDataMap.get(hoveredDate)!.more > 0 && (
-                <p className="text-xs text-muted italic mt-0.5">+ {hoverDataMap.get(hoveredDate)!.more} more</p>
-              )}
+            <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
+              {hoverDataMap.get(hoveredDate)!.activities.map((activity, i) => {
+                const status = activityStatusPresentation[activity.calendarStatus];
+
+                return (
+                  <div key={`${activity.title}-${i}`} className="flex items-start justify-between gap-2">
+                    <p className="text-xs text-secondary break-words leading-snug">• {activity.title}</p>
+                    <span className={cn("shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none", status.className)}>
+                      {status.label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
