@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { OverviewDashboard } from "./features/overview/OverviewDashboard";
 import { ActivitiesPage } from "./features/activities/ActivitiesPage";
-import { LayoutDashboard, ListTodo, Moon, Sun, RefreshCw, AlertCircle } from "lucide-react";
+import { LayoutDashboard, ListTodo, Moon, Sun, RefreshCw, AlertCircle, LogOut } from "lucide-react";
 import { cn } from "./lib/utils";
 import { useActivitiesData } from "./hooks/useActivitiesData";
+import { AuthProvider, useAuth } from './features/auth/AuthContext';
+import { AuthGate } from './features/auth/AuthGate';
 
 type View = "overview" | "activities";
 
@@ -35,7 +37,8 @@ function formatRefreshedAt(isoString: string | null) {
   return `Last refreshed ${formatted} IST`;
 }
 
-function App() {
+function AppContent() {
+  const { user, logOut } = useAuth();
   const [isDark, setIsDark] = useState(false);
   const [activeView, setActiveView] = useState<View>("overview");
   const [initialFilters, setInitialFilters] = useState<{ timelineStatus?: string[] } | null>(null);
@@ -85,6 +88,14 @@ function App() {
               aria-label="Toggle theme"
             >
               {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button
+              type="button"
+              onClick={logOut}
+              className="p-2 text-secondary hover:text-danger transition-colors rounded-lg hover:bg-surface/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-danger"
+              aria-label="Sign out"
+            >
+              <LogOut size={18} />
             </button>
           </div>
         </div>
@@ -141,6 +152,22 @@ function App() {
             {isDark ? <Sun size={16} className="text-muted" /> : <Moon size={16} className="text-muted" />}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </button>
+
+          <div className="mt-4 pt-4 border-t border-subtle">
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-xs text-muted truncate max-w-[130px]" title={user?.email || 'User'}>
+                {user?.email || 'User'}
+              </span>
+              <button
+                type="button"
+                onClick={logOut}
+                className="text-secondary hover:text-danger transition-colors focus:outline-none"
+                aria-label="Sign out"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -186,6 +213,16 @@ function App() {
         </div>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AuthGate>
+        <AppContent />
+      </AuthGate>
+    </AuthProvider>
   );
 }
 
