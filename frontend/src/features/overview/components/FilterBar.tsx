@@ -32,12 +32,12 @@ function useOutsideClick(handler: () => void, containerSelector: string) {
   }, [containerSelector]);
 }
 
-type FilterCategory = 'workstream' | 'subWorkstream' | 'agency';
+type FilterCategory = 'component' | 'subComponent' | 'agency' | 'subAgency';
 
 export function FilterBar({ filters }: FilterBarProps) {
   const [filterOpen, setFilterOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<FilterCategory>('workstream');
-  const [mobileExpanded, setMobileExpanded] = useState<FilterCategory | null>('workstream');
+  const [activeCategory, setActiveCategory] = useState<FilterCategory>('component');
+  const [mobileExpanded, setMobileExpanded] = useState<FilterCategory | null>('component');
   
   const filterBtnRef = useRef<HTMLButtonElement>(null);
   const filterPopoverRef = useRef<HTMLDivElement>(null);
@@ -68,12 +68,13 @@ export function FilterBar({ filters }: FilterBarProps) {
     }
   };
 
-  const activeFiltersCount = filters.workstream.length + filters.subWorkstream.length + filters.agency.length;
+  const activeFiltersCount = filters.component.length + filters.subComponent.length + filters.agency.length + filters.subAgency.length;
 
   const CATEGORIES: { id: FilterCategory; label: string; current: string[]; setter: (val: string[]) => void; options: string[] }[] = [
-    { id: 'workstream', label: 'Workstream', current: filters.workstream, setter: filters.setWorkstream, options: filters.availableWorkstreams },
-    { id: 'subWorkstream', label: 'Sub-Workstream', current: filters.subWorkstream, setter: filters.setSubWorkstream, options: filters.availableSubWorkstreams },
-    { id: 'agency', label: 'Agency', current: filters.agency, setter: filters.setAgency, options: filters.availableAgencies },
+    { id: 'component', label: 'Component', current: filters.component, setter: filters.setComponent, options: filters.availableComponents },
+    { id: 'subComponent', label: 'Sub-Component', current: filters.subComponent, setter: filters.setSubComponent, options: filters.availableSubComponents },
+    { id: 'agency', label: 'Agency / Responsible', current: filters.agency, setter: filters.setAgency, options: filters.availableAgencies },
+    { id: 'subAgency', label: 'Sub Agency', current: filters.subAgency, setter: filters.setSubAgency, options: filters.availableSubAgencies },
   ];
 
   const activeCatData = CATEGORIES.find(c => c.id === activeCategory) || CATEGORIES[0];

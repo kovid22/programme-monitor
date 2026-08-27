@@ -1,6 +1,5 @@
 import type { Activity } from "../../../data/types";
 import { cn } from "../../../lib/utils";
-import { parseLocalDate } from "../../../lib/dateUtils";
 
 export interface RiskAlertsProps {
   activities: Activity[];
@@ -34,10 +33,10 @@ export function RiskAlerts({ activities, onNavigateToActivities, onOpenActivity 
                     <span className="text-[13px] font-medium text-secondary truncate">{activity.component}</span>
                     <span className="w-1 h-1 rounded-full bg-subtle shrink-0"></span>
                     <span className="text-[13px] text-muted truncate">{activity.agency}</span>
-                    {activity.targetDate && (
+                    {activity.targetTiming && (
                       <>
                         <span className="w-1 h-1 rounded-full bg-subtle shrink-0"></span>
-                        <span className="text-[13px] text-muted shrink-0">Due {parseLocalDate(activity.targetDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        <span className="text-[13px] text-muted shrink-0">Target: {activity.targetTiming}</span>
                       </>
                     )}
                   </div>

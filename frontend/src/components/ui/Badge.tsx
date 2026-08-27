@@ -56,7 +56,7 @@ export function StatusBadge({ status, className }: { status: TimelineStatus | Co
       colorClass = "text-danger"; // Preserve explicit risk warning for readability
       bgClass = "bg-state-risk";
       break;
-    case "TBC":
+    case "To Be Confirmed":
     case "Not Started":
       bgClass = "bg-state-tbc shadow-glow-tbc";
       break;

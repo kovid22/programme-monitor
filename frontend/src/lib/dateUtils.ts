@@ -73,7 +73,7 @@ export function calculateCalendarData(activities: Activity[], overrideStartMonth
   const todayStr = toLocalDateString(today);
   const currentMonthStr = todayStr.substring(0, 7);
   
-  // Separate dated and TBC
+  // Only genuine parsed dates participate in calendar placement.
   const dated = activities.filter(a => a.targetDate && a.targetDate.trim() !== "");
   const tbcCount = activities.length - dated.length;
 
@@ -164,7 +164,7 @@ export function calculateCalendarData(activities: Activity[], overrideStartMonth
     const normal = calendarActivities.filter(activity => activity.calendarStatus === "scheduled").length;
     
     const val = acts.reduce((acc, a) => acc + (a.estValue || 0), 0);
-    const agencies = Array.from(new Set(acts.map(a => a.agency))).join(", ");
+    const agencies = Array.from(new Set(acts.flatMap(activity => activity.agencies))).join(", ");
     
     hoverDataMap.set(dStr, {
       total: acts.length,

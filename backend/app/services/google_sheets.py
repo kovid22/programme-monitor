@@ -8,11 +8,34 @@ from googleapiclient.errors import HttpError
 
 from app.config import settings
 from app.models import Activity
-from app.utils.dates import parse_target_date, determine_timeline_status
+from app.utils.dates import parse_target_date
 
 logger = logging.getLogger(__name__)
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+
+EXPECTED_HEADERS = [
+    "no.",
+    "component",
+    "sub-component",
+    "agency / responsible",
+    "sub agency",
+    "action / activity",
+    "est. value (inr lakh)",
+    "target / timing",
+    "timeline status",
+    "completion status",
+    "pmc resource aligned",
+    "remarks",
+]
+
+TIMELINE_STATUSES = frozenset({
+    "Overdue",
+    "Due Soon",
+    "On Track",
+    "Immediate",
+    "To Be Confirmed",
+})
 
 
 class ProgrammeDataSourceError(Exception):
@@ -48,6 +71,26 @@ def parse_estimated_value(val: str) -> Optional[float]:
         return float(val)
     except ValueError:
         return None
+
+
+def parse_agencies(value: str) -> list[str]:
+    """Return unique, trimmed agency values while preserving display casing."""
+    agencies: list[str] = []
+    seen: set[str] = set()
+    for agency in value.split(","):
+        normalized = agency.strip()
+        key = normalized.lower()
+        if normalized and key not in seen:
+            agencies.append(normalized)
+            seen.add(key)
+    return agencies
+
+
+def normalize_timeline_status(value: str) -> str:
+    """Validate the sheet-owned Timeline Status value."""
+    if value not in TIMELINE_STATUSES:
+        raise ValueError("Invalid timeline status.")
+    return value
 
 def normalize_completion_status(val: str) -> str:
     if not val:
@@ -107,69 +150,63 @@ def _fetch_from_google_sheets() -> List[Activity]:
     if not values:
         return []
         
-    headers = [str(h).strip().lower() for h in values[0]]
-    
-    def get_index(possible_names: List[str]) -> int:
-        for name in possible_names:
-            if name.lower() in headers:
-                return headers.index(name.lower())
-        return -1
-        
-    id_idx = get_index(['id', 'no.', 'no', 'number'])
-    ws_idx = get_index(['workstream', 'component'])
-    sub_ws_idx = get_index(['sub-workstream', 'sub workstream', 'sub-component', 'sub component'])
-    agency_idx = get_index(['agency', 'agency / responsible', 'responsible'])
-    activity_idx = get_index(['activity', 'action', 'action / activity'])
-    est_val_idx = get_index(['estimated value', 'est. value inr lakh', 'est. value (inr lakh)', 'est value'])
-    target_date_idx = get_index(['target date', 'target'])
-    comp_status_idx = get_index(['completion status', 'status'])
-    
-    if ws_idx == -1 or activity_idx == -1:
+    headers = [str(header).strip().lower() for header in values[0][:12]]
+    if headers != EXPECTED_HEADERS:
         raise ProgrammeDataConfigurationError(
-            "Missing required programme data headers."
+            "Programme data headers do not match the expected A:L schema."
         )
-        
-    activities = []
+
+    activities: List[Activity] = []
     
-    for i, row in enumerate(values[1:], start=2):
+    for row in values[1:]:
         if not any(str(cell).strip() for cell in row):
             continue
             
-        def get_val(idx: int) -> str:
-            if idx == -1 or idx >= len(row):
+        def get_val(index: int) -> str:
+            if index >= len(row):
                 return ""
-            return str(row[idx]).strip()
+            return str(row[index]).strip()
             
-        workstream = get_val(ws_idx)
-        activity_title = get_val(activity_idx)
+        component = get_val(1)
+        activity_title = get_val(5)
         
-        if not workstream or not activity_title:
+        if not component or not activity_title:
             logger.warning("Skipping programme row with required fields missing.")
             continue
             
-        id_val = get_val(id_idx) if id_idx != -1 else None
-        raw_target_date = get_val(target_date_idx)
-        parsed_target_date = parse_target_date(raw_target_date)
+        id_val = get_val(0)
+        target_timing = get_val(7)
+        parsed_target_date = parse_target_date(target_timing)
         
         try:
-            completion_status = normalize_completion_status(get_val(comp_status_idx))
+            completion_status = normalize_completion_status(get_val(9))
         except ValueError:
             logger.warning("Skipping programme row with invalid completion status.")
             continue
             
-        timeline_status = determine_timeline_status(parsed_target_date, raw_target_date)
-        est_val = parse_estimated_value(get_val(est_val_idx))
+        try:
+            timeline_status = normalize_timeline_status(get_val(8))
+        except ValueError:
+            logger.warning("Skipping programme row with invalid timeline status.")
+            continue
+        estimated_value_raw = get_val(6)
         
         activities.append(Activity(
             id=id_val if id_val else None,
-            workstream=workstream,
-            subWorkstream=get_val(sub_ws_idx),
-            agency=get_val(agency_idx),
+            component=component,
+            subComponent=get_val(2),
+            agency=get_val(3),
+            agencies=parse_agencies(get_val(3)),
+            subAgency=get_val(4) or None,
             title=activity_title,
-            estimatedValue=est_val,
+            estimatedValue=parse_estimated_value(estimated_value_raw),
+            estimatedValueRaw=estimated_value_raw,
+            targetTiming=target_timing,
             targetDate=parsed_target_date,
-            timelineStatus=timeline_status, # type: ignore
-            completionStatus=completion_status # type: ignore
+            timelineStatus=timeline_status,  # type: ignore[arg-type]
+            completionStatus=completion_status,  # type: ignore[arg-type]
+            pmcResourceAligned=get_val(10) or None,
+            remarks=get_val(11) or None,
         ))
         
     return activities

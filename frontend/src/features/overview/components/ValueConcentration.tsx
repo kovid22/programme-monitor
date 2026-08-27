@@ -60,7 +60,7 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
   if (items.length === 0) {
     return (
       <div className="w-full bg-surface rounded-[24px] p-5 flex flex-col shadow-sm border border-subtle">
-        <h3 className="text-[14px] font-semibold text-primary tracking-wide mb-6 z-10 relative">Workstream Completion</h3>
+        <h3 className="text-[14px] font-semibold text-primary tracking-wide mb-6 z-10 relative">Component Completion</h3>
         <div className="flex items-center justify-center text-[13px] text-muted italic py-10">
           No activities available
         </div>
@@ -128,7 +128,7 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
       className="w-full h-full bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle relative overflow-hidden"
       onClick={handleContainerClick}
     >
-      <h3 className="text-base font-semibold text-primary tracking-wide mb-2 z-10 relative flex-shrink-0">Workstream Completion</h3>
+      <h3 className="text-base font-semibold text-primary tracking-wide mb-2 z-10 relative flex-shrink-0">Component Completion</h3>
 
       <div className="flex-1 w-full flex flex-col lg:flex-row items-center justify-center relative z-10 gap-8 lg:gap-12 lg:pr-8">
         

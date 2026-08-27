@@ -10,9 +10,10 @@ export function useActivitiesFilters(
   initialFilters?: { timelineStatus?: string[] } | null
 ) {
   const [search, setSearch] = useState('');
-  const [workstream, setWorkstream] = useState<string[]>([]);
-  const [subWorkstream, setSubWorkstream] = useState<string[]>([]);
+  const [component, setComponent] = useState<string[]>([]);
+  const [subComponent, setSubComponent] = useState<string[]>([]);
   const [agency, setAgency] = useState<string[]>([]);
+  const [subAgency, setSubAgency] = useState<string[]>([]);
   const [timelineStatus, setTimelineStatus] = useState<string[]>(initialFilters?.timelineStatus || []);
   const [completionStatus, setCompletionStatus] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('default');
@@ -34,19 +35,24 @@ export function useActivitiesFilters(
         a.title.toLowerCase().includes(q) ||
         (a.id && a.id.toLowerCase().includes(q)) ||
         a.agency.toLowerCase().includes(q) ||
+        (a.subAgency?.toLowerCase().includes(q) ?? false) ||
         a.component.toLowerCase().includes(q) ||
-        a.subComponent.toLowerCase().includes(q)
+        a.subComponent.toLowerCase().includes(q) ||
+        a.targetTiming.toLowerCase().includes(q)
       );
     }
 
-    if (workstream.length > 0) {
-      result = result.filter(a => workstream.includes(a.component));
+    if (component.length > 0) {
+      result = result.filter(a => component.includes(a.component));
     }
-    if (subWorkstream.length > 0) {
-      result = result.filter(a => subWorkstream.includes(a.subComponent));
+    if (subComponent.length > 0) {
+      result = result.filter(a => subComponent.includes(a.subComponent));
     }
     if (agency.length > 0) {
-      result = result.filter(a => agency.some(ag => a.agency.includes(ag)));
+      result = result.filter(a => agency.some(ag => a.agencies.includes(ag)));
+    }
+    if (subAgency.length > 0) {
+      result = result.filter(a => a.subAgency !== null && subAgency.includes(a.subAgency));
     }
     if (timelineStatus.length > 0) {
       result = result.filter(a => {
@@ -67,15 +73,14 @@ export function useActivitiesFilters(
       'Immediate': 2,
       'Due Soon': 3,
       'On Track': 4,
-      'TBC': 5
+      'To Be Confirmed': 5
     };
 
     const statusMap: Record<string, number> = {
       'Completed': 1,
       'In Progress': 2,
       'Not Started': 3,
-      'Cancelled': 4,
-      'Delayed': 5
+      'Delayed': 4
     };
 
     result.sort((a, b) => {
@@ -135,54 +140,63 @@ export function useActivitiesFilters(
     });
 
     return result;
-  }, [activities, search, workstream, subWorkstream, agency, timelineStatus, completionStatus, sortBy]);
+  }, [activities, search, component, subComponent, agency, subAgency, timelineStatus, completionStatus, sortBy]);
 
-  const availableWorkstreams = useMemo(() => ["All", ...Array.from(new Set(activities.map(a => a.component))).sort()], [activities]);
+  const availableComponents = useMemo(() => ["All", ...Array.from(new Set(activities.map(a => a.component))).sort()], [activities]);
   
-  const availableSubWorkstreams = useMemo(() => {
-    // If workstreams are selected, only show subworkstreams for those workstreams
-    const filteredForSub = workstream.length > 0 
-      ? activities.filter(a => workstream.includes(a.component))
+  const availableSubComponents = useMemo(() => {
+    const filteredForSub = component.length > 0
+      ? activities.filter(activity => component.includes(activity.component))
       : activities;
     const set = new Set(filteredForSub.map(a => a.subComponent));
     return ["All", ...Array.from(set).sort()];
-  }, [activities, workstream]);
+  }, [activities, component]);
   
   const availableAgencies = useMemo(() => {
     const set = new Set<string>();
     activities.forEach(a => {
-      a.agency.split(',').forEach(ag => set.add(ag.trim()));
+      a.agencies.forEach(agencyValue => set.add(agencyValue));
     });
     return ["All", ...Array.from(set).sort()];
   }, [activities]);
 
-  const availableTimelineStatuses = ["All", "Overdue", "Immediate", "Due Soon", "On Track", "TBC"];
+  const availableSubAgencies = useMemo(
+    () => ["All", ...Array.from(new Set(
+      activities.flatMap(activity => activity.subAgency ? [activity.subAgency] : [])
+    )).sort()],
+    [activities],
+  );
+
+  const availableTimelineStatuses = ["All", "Overdue", "Immediate", "Due Soon", "On Track", "To Be Confirmed"];
   const availableCompletionStatuses = useMemo(() => ["All", ...Array.from(new Set(activities.map(a => a.completionStatus))).sort()], [activities]);
 
   const resetFilters = () => {
     setSearch('');
-    setWorkstream([]);
-    setSubWorkstream([]);
+    setComponent([]);
+    setSubComponent([]);
     setAgency([]);
+    setSubAgency([]);
     setTimelineStatus([]);
     setCompletionStatus([]);
     // Do not reset sort! The prompt says "Changing filters must not reset the selected sort."
   };
 
-  const hasActiveFilters = search.trim() !== '' || workstream.length > 0 || subWorkstream.length > 0 || agency.length > 0 || timelineStatus.length > 0 || completionStatus.length > 0;
+  const hasActiveFilters = search.trim() !== '' || component.length > 0 || subComponent.length > 0 || agency.length > 0 || subAgency.length > 0 || timelineStatus.length > 0 || completionStatus.length > 0;
 
   return {
     search, setSearch,
-    workstream, setWorkstream,
-    subWorkstream, setSubWorkstream,
+    component, setComponent,
+    subComponent, setSubComponent,
     agency, setAgency,
+    subAgency, setSubAgency,
     timelineStatus, setTimelineStatus,
     completionStatus, setCompletionStatus,
     sortBy, setSortBy,
     filtered,
-    availableWorkstreams,
-    availableSubWorkstreams,
+    availableComponents,
+    availableSubComponents,
     availableAgencies,
+    availableSubAgencies,
     availableTimelineStatuses,
     availableCompletionStatuses,
     resetFilters,

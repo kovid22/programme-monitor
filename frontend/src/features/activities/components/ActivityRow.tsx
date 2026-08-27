@@ -1,6 +1,5 @@
 import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
-import { parseLocalDate } from '../../../lib/dateUtils';
 import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
 import { formatCurrencyValue } from '../../../lib/utils';
 
@@ -11,7 +10,7 @@ interface ActivityRowProps {
 
 export function ActivityRow({ activity, onClick }: ActivityRowProps) {
   const isRisk = isEffectivelyAtRisk(activity);
-  const targetDateStr = activity.targetDate ? parseLocalDate(activity.targetDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBC';
+  const targetTiming = activity.targetTiming || 'Not Specified';
 
   return (
     <button
@@ -25,7 +24,7 @@ export function ActivityRow({ activity, onClick }: ActivityRowProps) {
         <span className="text-sm font-medium text-primary line-clamp-2 leading-snug">{activity.title}</span>
       </div>
 
-      {/* Context (Workstream / Sub) */}
+      {/* Context (Component / Sub-Component) */}
       <div className="col-span-3 flex flex-col pr-2">
         <span className="text-sm font-medium text-primary truncate">{activity.component}</span>
         <span className="text-xs text-secondary truncate mt-0.5">{activity.subComponent}</span>
@@ -36,9 +35,9 @@ export function ActivityRow({ activity, onClick }: ActivityRowProps) {
         <span className="text-xs font-medium text-secondary truncate">{activity.agency}</span>
       </div>
 
-      {/* Target Date */}
+      {/* Target / Timing */}
       <div className="col-span-1 flex items-center">
-        <span className="text-xs text-secondary whitespace-nowrap">{targetDateStr}</span>
+        <span className="text-xs text-secondary whitespace-nowrap truncate">{targetTiming}</span>
       </div>
 
       {/* Value */}

@@ -34,13 +34,13 @@ function useOutsideClick(handler: () => void, containerSelector: string) {
   }, [containerSelector]);
 }
 
-type FilterCategory = 'workstream' | 'subWorkstream' | 'agency' | 'timeline' | 'completion';
+type FilterCategory = 'component' | 'subComponent' | 'agency' | 'subAgency' | 'timeline' | 'completion';
 
 export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<FilterCategory>('workstream');
-  const [mobileExpanded, setMobileExpanded] = useState<FilterCategory | null>('workstream');
+  const [activeCategory, setActiveCategory] = useState<FilterCategory>('component');
+  const [mobileExpanded, setMobileExpanded] = useState<FilterCategory | null>('component');
   
   const filterBtnRef = useRef<HTMLButtonElement>(null);
   const filterPopoverRef = useRef<HTMLDivElement>(null);
@@ -84,14 +84,17 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
 
   const activeChips = useMemo(() => {
     const chips: { id: string; label: string; onRemove: () => void }[] = [];
-    filters.workstream.forEach(w => {
-      chips.push({ id: `ws-${w}`, label: `Workstream: ${w}`, onRemove: () => filters.setWorkstream(prev => prev.filter(x => x !== w)) });
+    filters.component.forEach(component => {
+      chips.push({ id: `component-${component}`, label: `Component: ${component}`, onRemove: () => filters.setComponent(prev => prev.filter(value => value !== component)) });
     });
-    filters.subWorkstream.forEach(sw => {
-      chips.push({ id: `sw-${sw}`, label: `Sub-Workstream: ${sw}`, onRemove: () => filters.setSubWorkstream(prev => prev.filter(x => x !== sw)) });
+    filters.subComponent.forEach(subComponent => {
+      chips.push({ id: `sub-component-${subComponent}`, label: `Sub-Component: ${subComponent}`, onRemove: () => filters.setSubComponent(prev => prev.filter(value => value !== subComponent)) });
     });
     filters.agency.forEach(a => {
-      chips.push({ id: `ag-${a}`, label: `Agency: ${a}`, onRemove: () => filters.setAgency(prev => prev.filter(x => x !== a)) });
+      chips.push({ id: `ag-${a}`, label: `Agency / Responsible: ${a}`, onRemove: () => filters.setAgency(prev => prev.filter(x => x !== a)) });
+    });
+    filters.subAgency.forEach(a => {
+      chips.push({ id: `sub-ag-${a}`, label: `Sub Agency: ${a}`, onRemove: () => filters.setSubAgency(prev => prev.filter(x => x !== a)) });
     });
     filters.timelineStatus.forEach(t => {
       chips.push({ id: `ts-${t}`, label: `Timeline: ${t}`, onRemove: () => filters.setTimelineStatus(prev => prev.filter(x => x !== t)) });
@@ -105,9 +108,10 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
   const activeFiltersCount = activeChips.length;
 
   const CATEGORIES: { id: FilterCategory; label: string; current: string[]; setter: (val: string[]) => void; options: string[] }[] = [
-    { id: 'workstream', label: 'Workstream', current: filters.workstream, setter: filters.setWorkstream, options: filters.availableWorkstreams.filter(x => x !== 'All') },
-    { id: 'subWorkstream', label: 'Sub-Workstream', current: filters.subWorkstream, setter: filters.setSubWorkstream, options: filters.availableSubWorkstreams.filter(x => x !== 'All') },
-    { id: 'agency', label: 'Agency', current: filters.agency, setter: filters.setAgency, options: filters.availableAgencies.filter(x => x !== 'All') },
+    { id: 'component', label: 'Component', current: filters.component, setter: filters.setComponent, options: filters.availableComponents.filter(x => x !== 'All') },
+    { id: 'subComponent', label: 'Sub-Component', current: filters.subComponent, setter: filters.setSubComponent, options: filters.availableSubComponents.filter(x => x !== 'All') },
+    { id: 'agency', label: 'Agency / Responsible', current: filters.agency, setter: filters.setAgency, options: filters.availableAgencies.filter(x => x !== 'All') },
+    { id: 'subAgency', label: 'Sub Agency', current: filters.subAgency, setter: filters.setSubAgency, options: filters.availableSubAgencies.filter(x => x !== 'All') },
     { id: 'timeline', label: 'Timeline Status', current: filters.timelineStatus, setter: filters.setTimelineStatus, options: filters.availableTimelineStatuses.filter(x => x !== 'All') },
     { id: 'completion', label: 'Completion Status', current: filters.completionStatus, setter: filters.setCompletionStatus, options: filters.availableCompletionStatuses.filter(x => x !== 'All') },
   ];
@@ -133,6 +137,8 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
           </div>
           <input
             type="text"
+            id="activity-search"
+            name="activity-search"
             className="w-full bg-surface border border-subtle text-primary text-sm rounded-lg pl-10 pr-4 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent placeholder:text-muted transition-colors"
             placeholder="Search activities, IDs, agencies..."
             value={filters.search}
@@ -256,9 +262,10 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
                       {activeFiltersCount > 0 && (
                         <button 
                           onClick={() => {
-                            filters.setWorkstream([]);
-                            filters.setSubWorkstream([]);
+                            filters.setComponent([]);
+                            filters.setSubComponent([]);
                             filters.setAgency([]);
+                            filters.setSubAgency([]);
                             filters.setTimelineStatus([]);
                             filters.setCompletionStatus([]);
                           }} 
@@ -277,9 +284,10 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
                       <span className="font-semibold text-primary">Filters</span>
                       {activeFiltersCount > 0 && (
                         <button onClick={() => {
-                          filters.setWorkstream([]);
-                          filters.setSubWorkstream([]);
+                          filters.setComponent([]);
+                          filters.setSubComponent([]);
                           filters.setAgency([]);
+                          filters.setSubAgency([]);
                           filters.setTimelineStatus([]);
                           filters.setCompletionStatus([]);
                         }} className="text-[13px] font-medium text-secondary hover:text-primary transition-colors">
@@ -431,9 +439,10 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
           ))}
           <button 
             onClick={() => {
-              filters.setWorkstream([]);
-              filters.setSubWorkstream([]);
+              filters.setComponent([]);
+              filters.setSubComponent([]);
               filters.setAgency([]);
+              filters.setSubAgency([]);
               filters.setTimelineStatus([]);
               filters.setCompletionStatus([]);
             }}

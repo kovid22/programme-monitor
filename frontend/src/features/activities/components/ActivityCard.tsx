@@ -1,6 +1,5 @@
 import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
-import { parseLocalDate } from '../../../lib/dateUtils';
 import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
 import { formatCurrencyValue } from '../../../lib/utils';
 
@@ -11,7 +10,7 @@ interface ActivityCardProps {
 
 export function ActivityCard({ activity, onClick }: ActivityCardProps) {
   const isRisk = isEffectivelyAtRisk(activity);
-  const targetDateStr = activity.targetDate ? parseLocalDate(activity.targetDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBC';
+  const targetTiming = activity.targetTiming || 'Not Specified';
 
   return (
     <button
@@ -39,8 +38,8 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
 
       <div className="flex justify-between items-end w-full mt-1 px-1">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Target</span>
-          <span className="text-xs text-primary font-medium">{targetDateStr}</span>
+          <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Target / Timing</span>
+          <span className="text-xs text-primary font-medium">{targetTiming}</span>
         </div>
         <div className="flex flex-col gap-0.5 items-center">
           <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Timeline</span>
