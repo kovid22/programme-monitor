@@ -1,12 +1,13 @@
 import logging
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
+from typing import List, Any, Dict
 
 from app.config import settings
 from app.models import Activity
 from app.services.google_sheets import fetch_activities_with_timestamp
+from app.auth import require_approved_user
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,7 +36,11 @@ def health_check():
     return {"status": "ok"}
 
 @app.get("/api/activities", response_model=ActivitiesResponse)
-def get_activities(response: Response, force_refresh: bool = False):
+def get_activities(
+    response: Response,
+    force_refresh: bool = False,
+    _user: Dict[str, Any] = Depends(require_approved_user),
+):
     try:
         activities, refreshed_at = fetch_activities_with_timestamp(force_refresh=force_refresh)
         if refreshed_at:

@@ -1,4 +1,5 @@
 import type { Activity, TimelineStatus, CompletionStatus } from '../data/types';
+import { getAuthToken } from '../lib/firebase';
 
 export interface BackendActivity {
   id: string | null;
@@ -22,6 +23,22 @@ export interface FetchResult {
   refreshedAt: string | null;
 }
 
+export type ActivitiesApiErrorKind =
+  | 'authentication'
+  | 'accessDenied'
+  | 'authenticationService'
+  | 'other';
+
+export class ActivitiesApiError extends Error {
+  readonly kind: ActivitiesApiErrorKind;
+
+  constructor(kind: ActivitiesApiErrorKind) {
+    super('Unable to fetch activities.');
+    this.name = 'ActivitiesApiError';
+    this.kind = kind;
+  }
+}
+
 export async function fetchActivities(forceRefresh: boolean = false): Promise<FetchResult> {
   let baseUrl = import.meta.env.VITE_API_BASE_URL;
   
@@ -34,10 +51,34 @@ export async function fetchActivities(forceRefresh: boolean = false): Promise<Fe
   }
   
   const url = forceRefresh ? `${baseUrl}/api/activities?force_refresh=true` : `${baseUrl}/api/activities`;
-  const response = await fetch(url);
+  const token = await getAuthToken();
+
+  if (!token) {
+    throw new ActivitiesApiError('authentication');
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch {
+    throw new ActivitiesApiError('other');
+  }
   
   if (!response.ok) {
-    throw new Error('Failed to fetch activities');
+    if (response.status === 401) {
+      throw new ActivitiesApiError('authentication');
+    }
+    if (response.status === 403) {
+      throw new ActivitiesApiError('accessDenied');
+    }
+    if (response.status === 503) {
+      throw new ActivitiesApiError('authenticationService');
+    }
+    throw new ActivitiesApiError('other');
   }
   
   const refreshedAt = response.headers.get('X-Data-Refreshed-At');
