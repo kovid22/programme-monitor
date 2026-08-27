@@ -10,7 +10,7 @@ Rather than replacing an existing programme-data workflow, the application adds 
 
 The interface is organized around two levels of analysis:
 
-1. **Programme Overview** - understand overall delivery health, upcoming deadlines, risk, completion, and value concentration.
+1. **Programme Overview** - understand overall delivery health, upcoming deadlines, risk, completion, and agency delivery exposure.
 2. **Activity Explorer** - investigate the individual activities behind those metrics using search, filtering, sorting, and activity details.
 
 This allows users to move from portfolio-level monitoring into individual programme items without turning the dashboard into a data-entry system.
@@ -30,9 +30,9 @@ The **Programme Overview** is the main analytical view of the application.
 Four headline indicators summarize the current programme state:
 
 * **Overall Completion** - percentage and number of completed activities.
-* **Activities at Risk** - activities currently classified as Immediate or Overdue, excluding work already completed.
 * **Estimated Value** - total estimated value represented by the selected programme scope.
-* **Value at Risk** - estimated value associated with activities currently requiring attention.
+* **Due Soon** - activities with a Timeline Status of Due Soon.
+* **Activities at Risk** - activities currently classified as Immediate or Overdue, excluding work already completed.
 
 These metrics respond to the dashboard filters, allowing the same overview to be used for the entire programme or a narrower operational scope.
 
@@ -40,9 +40,10 @@ These metrics respond to the dashboard filters, allowing the same overview to be
 
 The Overview can be filtered by:
 
-* Workstream
-* Sub-Workstream
-* Agency
+* Component
+* Sub-Component
+* Agency / Responsible
+* Sub Agency
 
 Filtering applies across the dashboard rather than to a single visualization. This makes it possible to inspect a particular area of the programme while preserving the same analytical layout.
 
@@ -56,11 +57,11 @@ Dates containing multiple activities are represented together rather than being 
 
 This makes congested delivery periods easier to understand without losing the activity-level detail behind them.
 
-### Workstream Completion
+### Completion by Agency
 
-The workstream view provides a structural breakdown of programme progress.
+The agency view compares completion for DoE, DoR, JSV, PWD, and HPSRLM using the activities in the selected dashboard scope.
 
-This makes differences in completion across major areas easier to identify without having to inspect individual activities one at a time.
+Activities shared by multiple responsible agencies contribute once to each agency's completion totals. This makes differences in completion across responsible agencies easier to identify without inspecting activities one at a time.
 
 ### Needs Attention
 
@@ -68,11 +69,11 @@ Activities requiring immediate attention are surfaced directly on the Overview.
 
 This creates a direct path from programme-level monitoring to the underlying activity. Selecting an activity opens its detail view, while the Activity Explorer can be opened with the relevant risk scope applied.
 
-### Value Concentration
+### Agency Delivery Exposure
 
-Programme value is visualized alongside delivery state and workstream distribution.
+Agency Delivery Exposure shows estimated programme value by delivery state for each responsible agency.
 
-This adds another dimension to programme monitoring: an activity can be operationally important not only because of its deadline, but also because of the amount of estimated value associated with it.
+Shared activities contribute to every responsible agency's exposure total, so agency totals can exceed the unique programme value. This is intentional: the visual represents agency exposure rather than a unique programme-value sum.
 
 Estimated values originate from the source data in **INR lakh** and are formatted for clearer presentation in the interface.
 
@@ -93,8 +94,9 @@ Activities can be searched in real time using information including:
 * activity ID
 * activity title
 * agency
-* workstream
-* sub-workstream
+* component
+* sub-component
+* sub agency
 
 Search works alongside filtering and sorting rather than replacing them.
 
@@ -102,13 +104,14 @@ Search works alongside filtering and sorting rather than replacing them.
 
 The Explorer supports filtering across several dimensions:
 
-* Workstream
-* Sub-Workstream
-* Agency
+* Component
+* Sub-Component
+* Agency / Responsible
+* Sub Agency
 * Timeline Status
 * Completion Status
 
-Available Sub-Workstreams respond to the selected Workstream scope, reducing irrelevant filter choices.
+Available Sub-Components respond to the selected Component scope, reducing irrelevant filter choices.
 
 The filtering interface includes responsive behavior for smaller screens, although the desktop experience remains the most complete and refined.
 
@@ -135,12 +138,15 @@ Selecting an activity opens a side drawer containing key information such as:
 
 * activity identifier
 * activity title
-* workstream and sub-workstream
-* responsible agency
-* target date
+* Component
+* Sub-Component
+* Agency / Responsible
+* Sub Agency, where present
+* Target / Timing
 * estimated value
-* timeline status
-* completion status
+* Timeline Status
+* Completion Status
+* PMC Resource Aligned
 
 The drawer allows an activity to be inspected without navigating away from the current filtered or sorted view.
 
@@ -152,15 +158,15 @@ Programme Monitor treats **timeline status** and **completion status** as separa
 
 ### Timeline Status
 
-Timeline status is derived from an activity's target date and normalized into:
+Timeline Status is sourced from the Google Sheet and validated by the backend. The valid states are:
 
 * `Overdue`
-* `Immediate`
 * `Due Soon`
 * `On Track`
-* `TBC`
+* `Immediate`
+* `To Be Confirmed`
 
-This provides a consistent operational interpretation even when the source spreadsheet contains different date formats or special values.
+Target / Timing may contain a real date or free-text timing such as an immediate or relative deadline. The backend populates `targetDate` only when Target / Timing contains a real date, while preserving the original text for display.
 
 ### Completion Status
 
@@ -190,7 +196,8 @@ Google Cloud Run
       │
       ├── Source validation
       ├── Data normalization
-      ├── Timeline derivation
+      ├── Timeline Status validation
+      ├── Target-date parsing where possible
       ├── Server-side caching
       └── Firebase token verification
       │
@@ -219,8 +226,8 @@ Its responsibilities include:
 * identifying relevant spreadsheet columns
 * validating required data
 * normalizing completion states
-* parsing target dates
-* deriving timeline status
+* validating and preserving source Timeline Status
+* parsing real target dates where possible while preserving original Target / Timing text
 * normalizing estimated values
 * caching recently retrieved data
 * validating Firebase authentication tokens

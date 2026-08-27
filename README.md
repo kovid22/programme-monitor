@@ -17,10 +17,10 @@ For a detailed product walkthrough, see [`WalkThrough.md`](WalkThrough.md).
 ## Features
 
 - **Programme overview dashboard** with completion, risk, value, and delivery metrics
-- **Dashboard filtering** by Workstream, Sub-Workstream, and Agency
+- **Dashboard filtering** by Component, Sub-Component, Agency / Responsible, and Sub Agency
 - **Activity explorer** with search, filtering, and multi-dimensional sorting
 - **Activity detail drawer** for individual programme items
-- **Timeline health states** including Overdue, Immediate, Due Soon, On Track, and TBC
+- **Timeline health states** including Overdue, Immediate, Due Soon, On Track, and To Be Confirmed
 - **Delivery calendar** with support for multiple activities on the same date
 - **Google Sheets integration** for live programme data
 - **Firebase Authentication** with backend access control
@@ -110,7 +110,7 @@ See [`WalkThrough.md`](WalkThrough.md) for a deeper look at the interface, user 
 
 ## Status
 
-**v0.6.10** Firebase-authenticated production deployment running on Firebase Hosting and Google Cloud Run with Google Sheets as the source of truth.
+**v1.0.16** Firebase-authenticated production deployment running on Firebase Hosting and Google Cloud Run with Google Sheets as the source of truth.
 
 ## License
 
