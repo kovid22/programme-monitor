@@ -21,59 +21,64 @@ const ORDER = [
   PRESENTATION_STATES.SCHEDULED, 
   PRESENTATION_STATES.TBC
 ];
+const AGENCIES = ["DoE", "DoR", "JSV", "PWD", "HPSRLM"] as const;
 
 export function DeliveryFlow({ activities }: DeliveryFlowProps) {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
-    ws: string;
+    agency: string;
     state: string;
     value: number;
     pct: number;
   } | null>(null);
 
-  const { top5, maxVal } = useMemo(() => {
-    const valid = activities.filter(a => typeof a.estValue === 'number' && a.estValue > 0);
-    const wsMap = new Map<string, { total: number; states: Record<string, number> }>();
+  const { agencyExposure, maxValue, hasNumericValue } = useMemo(() => {
+    const numericActivities = activities.filter(
+      (activity) => typeof activity.estValue === "number" && Number.isFinite(activity.estValue)
+    );
+    const agencyMap = new Map(AGENCIES.map((agency) => [agency, {
+      total: 0,
+      states: {
+        [PRESENTATION_STATES.COMPLETED]: 0,
+        [PRESENTATION_STATES.AT_RISK]: 0,
+        [PRESENTATION_STATES.SCHEDULED]: 0,
+        [PRESENTATION_STATES.TBC]: 0,
+      },
+    }]));
 
-    valid.forEach(a => {
-      const val = a.estValue!;
-      const ws = a.component?.trim() || 'Unknown';
-      
-      if (!wsMap.has(ws)) {
-        wsMap.set(ws, { 
-          total: 0, 
-          states: { 
-            [PRESENTATION_STATES.COMPLETED]: 0, 
-            [PRESENTATION_STATES.AT_RISK]: 0, 
-            [PRESENTATION_STATES.SCHEDULED]: 0, 
-            [PRESENTATION_STATES.TBC]: 0 
-          } 
-        });
-      }
-      
-      const entry = wsMap.get(ws)!;
-      entry.total += val;
+    numericActivities.forEach((activity) => {
+      const value = activity.estValue!;
+      const presentationState = getPresentationState(activity);
+      const assignedAgencies = new Set(activity.agencies);
 
-      const pState = getPresentationState(a);
-      entry.states[pState] += val;
+      AGENCIES.forEach((agency) => {
+        if (!assignedAgencies.has(agency)) return;
+
+        const entry = agencyMap.get(agency)!;
+        entry.total += value;
+        entry.states[presentationState] += value;
+      });
     });
 
-    const top = Array.from(wsMap.entries())
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5);
+    const exposure = AGENCIES.map((agency) => ({
+      name: agency,
+      ...agencyMap.get(agency)!,
+    })).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+    const max = Math.max(...exposure.map((agency) => agency.total));
 
-    const max = top.length > 0 ? Math.max(...top.map(w => w.total)) : 0;
-
-    return { top5: top, maxVal: max };
+    return {
+      agencyExposure: exposure,
+      maxValue: max,
+      hasNumericValue: numericActivities.length > 0,
+    };
   }, [activities]);
 
-  if (top5.length === 0) {
+  if (!hasNumericValue) {
     return (
       <div className="w-full h-full min-h-[260px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle">
-        <h3 className="text-base font-semibold text-primary tracking-wide mb-6">Value by Delivery State</h3>
+        <h3 className="text-base font-semibold text-primary tracking-wide mb-6">Agency Delivery Exposure</h3>
         <div className="flex-1 flex items-center justify-center text-[13px] text-muted italic">
           No value data available
         </div>
@@ -87,52 +92,52 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
       onMouseLeave={() => { setHoveredSegment(null); setTooltip(null); }}
     >
       <div className="mb-8">
-        <h3 className="text-base font-semibold text-primary tracking-wide">Value by Delivery State</h3>
+        <h3 className="text-base font-semibold text-primary tracking-wide">Agency Delivery Exposure</h3>
       </div>
 
       <div className="flex-1 flex flex-col justify-center gap-8 w-full pb-2">
-        {top5.map((ws) => {
+        {agencyExposure.map((agency) => {
           const breakdownText = ORDER.map(state => {
-            const val = ws.states[state];
+            const val = agency.states[state];
             if (!val) return null;
             return `${state}: ${formatCurrencyValue(val)}`;
           }).filter(Boolean).join(", ");
           
           return (
           <div 
-            key={ws.name} 
+            key={agency.name}
             className="flex items-center gap-4 w-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
             tabIndex={0}
             role="group"
-            aria-label={`${ws.name}. Total value: ${formatCurrencyValue(ws.total)}. Breakdown: ${breakdownText}`}
+            aria-label={`${agency.name}. Total value: ${formatCurrencyValue(agency.total)}. Breakdown: ${breakdownText}`}
           >
             <div className="w-[120px] sm:w-[150px] shrink-0">
               <span 
                 className="text-[13px] font-medium text-primary truncate block leading-tight" 
-                title={ws.name}
+                title={agency.name}
               >
-                {ws.name}
+                {agency.name}
               </span>
             </div>
             
             <div className="flex-1 h-[24px] bg-slate-100/70 dark:bg-slate-800/30 rounded-[6px] relative">
               <div 
                 className="absolute left-0 top-0 bottom-0 flex gap-[1px]"
-                style={{ width: `${(ws.total / maxVal) * 100}%` }}
+                style={{ width: `${maxValue > 0 ? (agency.total / maxValue) * 100 : 0}%` }}
               >
                 {ORDER.map(state => {
-                  const val = ws.states[state] || 0;
+                  const val = agency.states[state] || 0;
                   if (val === 0) return null;
                   
-                  const pctOfWs = (val / ws.total) * 100;
-                  const segmentId = `${ws.name}-${state}`;
+                  const pctOfAgency = (val / agency.total) * 100;
+                  const segmentId = `${agency.name}-${state}`;
                   
                   return (
                     <div
                       key={state}
                       className={cn("h-full cursor-pointer transition-opacity duration-150 ease-out rounded-[6px] shrink", STATE_CLASSES[state])}
                       style={{ 
-                        flex: `0 1 ${pctOfWs}%`,
+                        flex: `0 1 ${pctOfAgency}%`,
                         minWidth: '4px',
                         opacity: hoveredSegment ? (hoveredSegment === segmentId ? 1 : 0.25) : 1
                       }}
@@ -141,10 +146,10 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
                         setTooltip({
                           x: e.clientX,
                           y: e.clientY,
-                          ws: ws.name,
+                          agency: agency.name,
                           state,
                           value: val,
-                          pct: pctOfWs
+                          pct: pctOfAgency
                         });
                       }}
                       onMouseLeave={() => {
@@ -159,7 +164,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
 
             <div className="w-[60px] sm:w-[70px] shrink-0 text-right">
               <span className="text-[13px] font-medium text-muted">
-                {formatCurrencyValue(ws.total)}
+                {formatCurrencyValue(agency.total)}
               </span>
             </div>
           </div>
@@ -182,7 +187,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
           className="fixed z-50 pointer-events-none bg-surface border border-subtle shadow-lg rounded-xl p-3.5 flex flex-col min-w-[180px]"
           style={{ left: tooltip.x + 16, top: tooltip.y + 16 }}
         >
-          <span className="text-[11px] font-semibold tracking-wider text-muted uppercase mb-1">{tooltip.ws}</span>
+          <span className="text-[11px] font-semibold tracking-wider text-muted uppercase mb-1">{tooltip.agency}</span>
           <div className="flex items-center gap-2 mb-2">
             <div className={cn("w-2 h-2 rounded-full", STATE_CLASSES[tooltip.state])} />
             <span className="text-[13px] font-medium text-primary">{tooltip.state}</span>
