@@ -2,8 +2,6 @@ import { useEffect, useRef } from 'react';
 import { X, Calendar, User, Briefcase, IndianRupee } from 'lucide-react';
 import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
-import { parseLocalDate } from '../../../lib/dateUtils';
-import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
 import { formatCurrencyValue } from '../../../lib/utils';
 
 interface ActivityDetailDrawerProps {
@@ -32,9 +30,6 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
   }, [activity]);
 
   if (!activity) return null;
-
-  const isRisk = isEffectivelyAtRisk(activity);
-  const targetDateStr = activity.targetDate ? parseLocalDate(activity.targetDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBC';
 
   return (
     <>
@@ -69,9 +64,7 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
             <h1 className="text-xl font-bold text-primary leading-tight">{activity.title}</h1>
             <div className="flex flex-wrap gap-2 mt-2">
               <StatusBadge status={activity.completionStatus} />
-              <span className={`px-2 py-1 rounded text-[10px] font-bold tracking-wide uppercase ${isRisk ? 'bg-danger/10 text-danger' : 'bg-surface border border-subtle text-secondary'}`}>
-                {activity.timelineStatus}
-              </span>
+              <StatusBadge status={activity.timelineStatus} />
             </div>
           </div>
 
@@ -82,25 +75,28 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
             <div className="flex gap-4 items-start">
               <Briefcase size={18} className="text-muted mt-0.5 shrink-0" />
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Workstream</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Component</span>
                 <span className="text-sm font-medium text-primary">{activity.component}</span>
-                <span className="text-xs text-secondary mt-1">{activity.subComponent}</span>
+                <span className="text-xs text-secondary mt-1">Sub-Component: {activity.subComponent}</span>
               </div>
             </div>
 
             <div className="flex gap-4 items-start">
               <User size={18} className="text-muted mt-0.5 shrink-0" />
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Agency</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Agency / Responsible</span>
                 <span className="text-sm font-medium text-primary">{activity.agency}</span>
+                {activity.subAgency && (
+                  <span className="text-xs text-secondary mt-1">Sub Agency: {activity.subAgency}</span>
+                )}
               </div>
             </div>
 
             <div className="flex gap-4 items-start">
               <Calendar size={18} className="text-muted mt-0.5 shrink-0" />
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Target Date</span>
-                <span className="text-sm font-medium text-primary">{targetDateStr}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Target / Timing</span>
+                <span className="text-sm font-medium text-primary">{activity.targetTiming || 'Not Specified'}</span>
               </div>
             </div>
 
@@ -109,10 +105,20 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Estimated Value</span>
                 <span className="text-sm font-medium text-primary">
-                  {activity.estValue !== null && activity.estValue > 0 ? formatCurrencyValue(activity.estValue) : 'Not Specified'}
+                  {activity.estValue !== null ? formatCurrencyValue(activity.estValue) : activity.estimatedValueRaw || 'Not Specified'}
                 </span>
               </div>
             </div>
+
+            {activity.pmcResourceAligned && (
+              <div className="flex gap-4 items-start">
+                <Briefcase size={18} className="text-muted mt-0.5 shrink-0" />
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">PMC Resource Aligned</span>
+                  <span className="text-sm font-medium text-primary">{activity.pmcResourceAligned}</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="h-px w-full bg-subtle" />

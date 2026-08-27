@@ -48,7 +48,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
     const el = popupRef.current;
     const triggerRect = triggerElRef.current.getBoundingClientRect();
     
-    const width = el.offsetWidth || 256; // fallback for w-64
+    const width = el.offsetWidth || 320; // fallback for w-80
     const height = el.offsetHeight || 150;
     
     const gap = 10;
@@ -218,11 +218,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                   }
 
                   if (isToday) {
-                    if (data) {
-                      intensityClass += " ring-[2px] ring-[#0084FF] ring-offset-2 ring-offset-surface";
-                    } else {
-                      intensityClass = "bg-[#0084FF] text-white shadow-sm z-10";
-                    }
+                    intensityClass += " ring-2 ring-black dark:ring-white ring-offset-1 ring-offset-surface z-10";
                   }
 
                   if (data) {
@@ -299,7 +295,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
       {hoveredDate && hoverDataMap.has(hoveredDate) && (
         <div 
           ref={popupRef}
-          className="fixed p-3.5 bg-canvas border border-subtle rounded-xl shadow-md z-[100] w-64 max-h-[calc(100vh-2rem)] overflow-y-auto animate-in fade-in slide-in-from-bottom-[2px] duration-150 ease-out"
+          className="fixed w-80 max-w-[calc(100vw-2rem)] p-4 bg-canvas border border-subtle rounded-xl shadow-md z-[100] overflow-hidden animate-in fade-in slide-in-from-bottom-[2px] duration-150 ease-out"
           style={{ visibility: 'hidden' }}
           onMouseEnter={handlePopupMouseEnter}
           onMouseLeave={handlePopupMouseLeave}
@@ -325,20 +321,34 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
             </div>
             <div>
               <p className="text-xs text-muted mb-0.5">Agencies</p>
-              <p className="text-xs font-medium text-primary truncate">{hoverDataMap.get(hoveredDate)!.agencies}</p>
+              <p
+                className="text-xs font-medium text-primary truncate"
+                title={hoverDataMap.get(hoveredDate)!.agencies}
+              >
+                {hoverDataMap.get(hoveredDate)!.agencies}
+              </p>
             </div>
           </div>
           
-          <div className="pt-2 mt-1">
+          <div className="pt-3 mt-1 border-t border-subtle">
             <p className="text-xs text-muted mb-1.5">Activities</p>
-            <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
+            <div className="flex flex-col gap-2 max-h-[40vh] overflow-y-auto pr-1">
               {hoverDataMap.get(hoveredDate)!.activities.map((activity, i) => {
                 const status = activityStatusPresentation[activity.calendarStatus];
 
                 return (
-                  <div key={`${activity.title}-${i}`} className="flex items-start justify-between gap-2">
-                    <p className="text-xs text-secondary break-words leading-snug">• {activity.title}</p>
-                    <span className={cn("shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none", status.className)}>
+                  <div key={`${activity.title}-${i}`} className="flex items-start gap-3 py-0.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 text-xs font-medium text-primary leading-snug" title={activity.title}>
+                        {activity.title}
+                      </p>
+                      {activity.agency && (
+                        <p className="mt-0.5 truncate text-[11px] text-muted" title={activity.agency}>
+                          {activity.agency}
+                        </p>
+                      )}
+                    </div>
+                    <span className={cn("shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none text-center", status.className)}>
                       {status.label}
                     </span>
                   </div>

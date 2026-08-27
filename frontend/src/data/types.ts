@@ -1,14 +1,20 @@
-export type TimelineStatus = 'Immediate' | 'Overdue' | 'Due Soon' | 'On Track' | 'TBC';
+export type TimelineStatus = 'Immediate' | 'Overdue' | 'Due Soon' | 'On Track' | 'To Be Confirmed';
 export type CompletionStatus = 'Not Started' | 'In Progress' | 'Completed' | 'Delayed';
 
 export interface Activity {
-  id?: string | null;       // Maps to "No."
-  component: string;        // Maps to "Workstream"
-  subComponent: string;     // Maps to "Sub-Workstream"
-  agency: string;           // Maps to "Agency / Responsible" (comma-separated string)
-  title: string;            // Maps to "Action / Activity"
-  targetDate: string | null;// Maps to "Target Date"
-  estValue: number | null;  // Maps to "Est. Value (INR Lakh)"
+  id?: string | null;
+  component: string;
+  subComponent: string;
+  agency: string;
+  agencies: string[];
+  subAgency: string | null;
+  title: string;
+  estValue: number | null;
+  estimatedValueRaw: string;
+  targetTiming: string;
+  targetDate: string | null;
   timelineStatus: TimelineStatus;
   completionStatus: CompletionStatus;
+  pmcResourceAligned: string | null;
+  remarks: string | null;
 }

@@ -1,7 +1,5 @@
 import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
-import { parseLocalDate } from '../../../lib/dateUtils';
-import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
 import { formatCurrencyValue } from '../../../lib/utils';
 
 interface ActivityCardProps {
@@ -10,14 +8,13 @@ interface ActivityCardProps {
 }
 
 export function ActivityCard({ activity, onClick }: ActivityCardProps) {
-  const isRisk = isEffectivelyAtRisk(activity);
-  const targetDateStr = activity.targetDate ? parseLocalDate(activity.targetDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBC';
+  const targetTiming = activity.targetTiming || 'Not Specified';
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex flex-col gap-3 p-4 bg-canvas rounded-xl border border-subtle text-left mb-3 hover:border-primary/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm shadow-black/5"
+      className="w-full flex flex-col gap-3 bg-surface p-4 rounded-xl border border-subtle text-left mb-3 hover:border-primary/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm shadow-black/5 dark:bg-canvas"
     >
       <div className="flex justify-between items-start gap-3 w-full">
         <div className="flex flex-col">
@@ -39,14 +36,12 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
 
       <div className="flex justify-between items-end w-full mt-1 px-1">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Target</span>
-          <span className="text-xs text-primary font-medium">{targetDateStr}</span>
+          <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Target / Timing</span>
+          <span className="text-xs text-primary font-medium">{targetTiming}</span>
         </div>
         <div className="flex flex-col gap-0.5 items-center">
           <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Timeline</span>
-          <span className={`text-xs font-semibold ${isRisk ? 'text-danger' : 'text-secondary'}`}>
-            {activity.timelineStatus}
-          </span>
+          <StatusBadge status={activity.timelineStatus} />
         </div>
         <div className="flex flex-col gap-0.5 items-end">
           <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Value</span>

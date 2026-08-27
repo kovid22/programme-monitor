@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     GOOGLE_SHEET_ID: str = ""
-    GOOGLE_SHEET_RANGE: str = "Sheet1!A:Z"
+    GOOGLE_SHEET_RANGE: str = "A3:L"
     GOOGLE_SERVICE_ACCOUNT_JSON: str = ""
     FRONTEND_ORIGIN: str = "http://localhost:5173"
     ENVIRONMENT: str = "development"

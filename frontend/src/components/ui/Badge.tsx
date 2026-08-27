@@ -38,33 +38,44 @@ export function Badge({ className, variant = "default", children, ...props }: Ba
 }
 
 export function StatusBadge({ status, className }: { status: TimelineStatus | CompletionStatus; className?: string }) {
-  let colorClass = "text-secondary";
-  let bgClass = "bg-secondary";
+  let pillClass = "border-state-tbc/30 bg-state-tbc/15 text-secondary";
+  let dotClass = "bg-state-tbc";
   
   switch (status) {
     case "On Track":
-    case "Due Soon":
     case "In Progress":
-      bgClass = "bg-state-scheduled";
+      pillClass = "border-state-scheduled/30 bg-state-scheduled/15 text-state-scheduled";
+      dotClass = "bg-state-scheduled";
+      break;
+    case "Due Soon":
+      pillClass = "border-warning/30 bg-warning/15 text-warning";
+      dotClass = "bg-warning";
       break;
     case "Completed":
-      bgClass = "bg-state-completed";
+      pillClass = "border-state-completed/30 bg-state-completed/15 text-state-completed";
+      dotClass = "bg-state-completed";
       break;
     case "Immediate":
     case "Overdue":
     case "Delayed":
-      colorClass = "text-danger"; // Preserve explicit risk warning for readability
-      bgClass = "bg-state-risk";
+      pillClass = "border-state-risk/30 bg-state-risk/15 text-danger";
+      dotClass = "bg-state-risk";
       break;
-    case "TBC":
+    case "To Be Confirmed":
     case "Not Started":
-      bgClass = "bg-state-tbc shadow-glow-tbc";
+      pillClass = "border-state-tbc/30 bg-state-tbc/15 text-secondary";
       break;
   }
 
   return (
-    <div className={cn("inline-flex items-center gap-2 text-xs font-medium", colorClass, className)}>
-      <span className={cn("h-1.5 w-1.5 rounded-full", bgClass)} />
+    <div
+      className={cn(
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2 py-0.5 text-[10px] font-semibold leading-none",
+        pillClass,
+        className
+      )}
+    >
+      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dotClass)} />
       {status}
     </div>
   );

@@ -57,9 +57,10 @@ export function ActivitiesPage({ activities, initialFilters }: ActivitiesPagePro
             onActivityClick={handleOpenDetail} 
             resetFilters={filters.resetFilters}
             hasActiveFilters={
-              filters.workstream.length > 0 ||
-              filters.subWorkstream.length > 0 ||
+              filters.component.length > 0 ||
+              filters.subComponent.length > 0 ||
               filters.agency.length > 0 ||
+              filters.subAgency.length > 0 ||
               filters.timelineStatus.length > 0 ||
               filters.completionStatus.length > 0
             }

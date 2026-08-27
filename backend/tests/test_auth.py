@@ -558,6 +558,43 @@ def test_activities_approved_user_passes_auth(client):
     verify_id_token.assert_called_once_with("valid.token.here", check_revoked=True)
 
 
+def test_activities_serialization_preserves_target_timing(client):
+    from app.models import Activity
+
+    activity = Activity(
+        id="1",
+        component="Component A",
+        subComponent="Sub-Component A",
+        agency="DoE, JSV",
+        agencies=["DoE", "JSV"],
+        subAgency=None,
+        title="Synthetic activity",
+        estimatedValue=None,
+        estimatedValueRaw="TBD",
+        targetTiming="Within 1 month",
+        targetDate=None,
+        timelineStatus="To Be Confirmed",
+        completionStatus="In Progress",
+        pmcResourceAligned="Yes",
+        remarks="Synthetic remark",
+    )
+
+    with (
+        patch("app.auth.firebase_auth.verify_id_token", return_value=_make_decoded()),
+        patch("app.main.fetch_activities_with_timestamp", return_value=([activity], None)),
+    ):
+        response = client.get(
+            "/api/activities",
+            headers={"Authorization": "Bearer valid.token.here"},
+        )
+
+    assert response.status_code == 200
+    body = response.json()["activities"][0]
+    assert body["targetTiming"] == "Within 1 month"
+    assert body["targetDate"] is None
+    assert body["agencies"] == ["DoE", "JSV"]
+
+
 # ---------------------------------------------------------------------------
 # Case-insensitivity and whitespace handling in allowlist
 # ---------------------------------------------------------------------------

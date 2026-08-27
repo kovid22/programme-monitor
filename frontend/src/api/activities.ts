@@ -3,14 +3,20 @@ import { getAuthToken } from '../lib/firebase';
 
 export interface BackendActivity {
   id: string | null;
-  workstream: string;
-  subWorkstream: string;
+  component: string;
+  subComponent: string;
   agency: string;
+  agencies: string[];
+  subAgency: string | null;
   title: string;
   estimatedValue: number | null;
+  estimatedValueRaw: string;
+  targetTiming: string;
   targetDate: string | null;
   timelineStatus: string;
   completionStatus: string;
+  pmcResourceAligned: string | null;
+  remarks: string | null;
 }
 
 export interface ActivitiesResponse {
@@ -96,14 +102,20 @@ export async function fetchActivities(forceRefresh: boolean = false): Promise<Fe
   
   const mappedActivities = data.activities.map(act => ({
     id: act.id,
-    component: act.workstream,
-    subComponent: act.subWorkstream,
+    component: act.component,
+    subComponent: act.subComponent,
     agency: act.agency,
+    agencies: act.agencies,
+    subAgency: act.subAgency,
     title: act.title,
     estValue: act.estimatedValue,
+    estimatedValueRaw: act.estimatedValueRaw,
+    targetTiming: act.targetTiming,
     targetDate: act.targetDate,
     timelineStatus: act.timelineStatus as TimelineStatus,
-    completionStatus: act.completionStatus as CompletionStatus
+    completionStatus: act.completionStatus as CompletionStatus,
+    pmcResourceAligned: act.pmcResourceAligned,
+    remarks: act.remarks,
   }));
 
   return { activities: mappedActivities, refreshedAt };
