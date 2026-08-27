@@ -1,6 +1,6 @@
 # Programme Monitor
 
-![Version](https://img.shields.io/badge/version-v0.6.11-black)
+![Version](https://img.shields.io/badge/version-v0.7.1-black)
 ![Frontend](https://img.shields.io/badge/frontend-Firebase%20Hosting-orange)
 ![Backend](https://img.shields.io/badge/backend-Google%20Cloud%20Run-blue)
 
