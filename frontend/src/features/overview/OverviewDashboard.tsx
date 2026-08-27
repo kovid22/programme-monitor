@@ -81,7 +81,7 @@ export function OverviewDashboard({ activities, onNavigateToActivities }: Overvi
               <DeliveryCalendar activities={filteredActivities} />
             </div>
             <div className="lg:col-span-2 flex flex-col">
-              <ValueConcentration activities={filteredActivities} />
+              <ValueConcentration activities={filteredActivities} selectedAgencies={filters.agency} />
             </div>
           </div>
 
@@ -95,7 +95,7 @@ export function OverviewDashboard({ activities, onNavigateToActivities }: Overvi
               />
             </div>
             <div className="lg:col-span-3 flex flex-col min-w-0 overflow-hidden">
-              <DeliveryFlow activities={filteredActivities} />
+              <DeliveryFlow activities={filteredActivities} selectedAgencies={filters.agency} />
             </div>
           </div>
 

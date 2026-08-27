@@ -6,6 +6,7 @@ import { PRESENTATION_STATES } from "../../../data/constants";
 
 interface DeliveryFlowProps {
   activities: Activity[];
+  selectedAgencies: string[];
 }
 
 const STATE_CLASSES: Record<string, string> = {
@@ -23,7 +24,7 @@ const ORDER = [
 ];
 const AGENCIES = ["DoE", "DoR", "JSV", "PWD", "HPSRLM"] as const;
 
-export function DeliveryFlow({ activities }: DeliveryFlowProps) {
+export function DeliveryFlow({ activities, selectedAgencies }: DeliveryFlowProps) {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{
     x: number;
@@ -34,11 +35,12 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
     pct: number;
   } | null>(null);
 
-  const { agencyExposure, maxValue, hasNumericValue } = useMemo(() => {
+  const { agencyExposure, maxValue } = useMemo(() => {
+    const agenciesToDisplay = selectedAgencies.length > 0 ? selectedAgencies : AGENCIES;
     const numericActivities = activities.filter(
       (activity) => typeof activity.estValue === "number" && Number.isFinite(activity.estValue)
     );
-    const agencyMap = new Map(AGENCIES.map((agency) => [agency, {
+    const agencyMap = new Map(agenciesToDisplay.map((agency) => [agency, {
       total: 0,
       states: {
         [PRESENTATION_STATES.COMPLETED]: 0,
@@ -53,7 +55,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
       const presentationState = getPresentationState(activity);
       const assignedAgencies = new Set(activity.agencies);
 
-      AGENCIES.forEach((agency) => {
+      agenciesToDisplay.forEach((agency) => {
         if (!assignedAgencies.has(agency)) return;
 
         const entry = agencyMap.get(agency)!;
@@ -62,7 +64,7 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
       });
     });
 
-    const exposure = AGENCIES.map((agency) => ({
+    const exposure = agenciesToDisplay.map((agency) => ({
       name: agency,
       ...agencyMap.get(agency)!,
     })).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
@@ -71,20 +73,8 @@ export function DeliveryFlow({ activities }: DeliveryFlowProps) {
     return {
       agencyExposure: exposure,
       maxValue: max,
-      hasNumericValue: numericActivities.length > 0,
     };
-  }, [activities]);
-
-  if (!hasNumericValue) {
-    return (
-      <div className="w-full h-full min-h-[260px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle">
-        <h3 className="text-base font-semibold text-primary tracking-wide mb-6">Agency Delivery Exposure</h3>
-        <div className="flex-1 flex items-center justify-center text-[13px] text-muted italic">
-          No value data available
-        </div>
-      </div>
-    );
-  }
+  }, [activities, selectedAgencies]);
 
   return (
     <div 

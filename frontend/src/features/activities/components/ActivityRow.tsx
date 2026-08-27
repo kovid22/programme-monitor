@@ -14,7 +14,7 @@ export function ActivityRow({ activity, onClick }: ActivityRowProps) {
     <button
       type="button"
       onClick={onClick}
-      className="w-full grid grid-cols-12 items-center gap-4 bg-surface py-3.5 px-5 text-left border-b border-subtle last:border-0 hover:bg-surface/50 transition-colors focus:outline-none focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary group dark:bg-canvas"
+      className="w-full grid grid-cols-12 items-center gap-4 bg-surface py-3.5 px-5 text-left border-b border-subtle last:border-0 hover:bg-surface/50 transition-colors focus:outline-none focus-visible:bg-surface focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary group"
     >
       {/* Activity Title & ID */}
       <div className="col-span-4 flex flex-col pr-2">

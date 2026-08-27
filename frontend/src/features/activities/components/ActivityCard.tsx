@@ -14,7 +14,7 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex flex-col gap-3 bg-surface p-4 rounded-xl border border-subtle text-left mb-3 hover:border-primary/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm shadow-black/5 dark:bg-canvas"
+      className="w-full flex flex-col gap-3 bg-surface p-4 rounded-xl border border-subtle text-left mb-3 hover:border-primary/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm shadow-black/5"
     >
       <div className="flex justify-between items-start gap-3 w-full">
         <div className="flex flex-col">

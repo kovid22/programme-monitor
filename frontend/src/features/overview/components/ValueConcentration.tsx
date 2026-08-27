@@ -3,6 +3,7 @@ import type { Activity } from "../../../data/types";
 
 interface ValueConcentrationProps {
   activities: Activity[];
+  selectedAgencies: string[];
 }
 
 const CHART_THEME = [
@@ -19,13 +20,14 @@ const CENTER_Y = 125;
 const STROKE_WIDTH = 11;
 const HOVER_STROKE_WIDTH = 15;
 
-export function ValueConcentration({ activities }: ValueConcentrationProps) {
+export function ValueConcentration({ activities, selectedAgencies }: ValueConcentrationProps) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   const { overallPercentage, items } = useMemo(() => {
+    const agenciesToDisplay = selectedAgencies.length > 0 ? selectedAgencies : AGENCIES;
     let totalCompleted = 0;
     let totalCount = 0;
-    const agencyStats = new Map(AGENCIES.map((agency) => [agency, { completed: 0, total: 0 }]));
+    const agencyStats = new Map(agenciesToDisplay.map((agency) => [agency, { completed: 0, total: 0 }]));
 
     activities.forEach(a => {
       totalCount++;
@@ -33,7 +35,7 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
       if (isCompleted) totalCompleted++;
 
       const assignedAgencies = new Set(a.agencies);
-      AGENCIES.forEach((agency) => {
+      agenciesToDisplay.forEach((agency) => {
         if (!assignedAgencies.has(agency)) return;
 
         const stats = agencyStats.get(agency)!;
@@ -45,21 +47,23 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
 
     const overallPct = totalCount > 0 ? (totalCompleted / totalCount) * 100 : 0;
 
-    const finalItems = AGENCIES.map((agency, i) => {
+    const finalItems = agenciesToDisplay.map((agency) => {
       const stats = agencyStats.get(agency)!;
+      const themeIndex = AGENCIES.findIndex((knownAgency) => knownAgency === agency);
+      const theme = CHART_THEME[themeIndex >= 0 ? themeIndex : 0];
 
       return {
         name: agency,
         total: stats.total,
         completed: stats.completed,
         percentage: stats.total > 0 ? (stats.completed / stats.total) * 100 : 0,
-      color: CHART_THEME[i % CHART_THEME.length].color,
-        glow: CHART_THEME[i % CHART_THEME.length].glow,
+        color: theme.color,
+        glow: theme.glow,
       };
     });
 
     return { overallPercentage: overallPct, items: finalItems };
-  }, [activities]);
+  }, [activities, selectedAgencies]);
 
   if (activities.length === 0) {
     return (
