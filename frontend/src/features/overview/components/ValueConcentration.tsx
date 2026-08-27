@@ -9,13 +9,15 @@ const CHART_THEME = [
   { color: 'var(--color-cat-purple)', glow: 'var(--theme-drop-cat-purple)' },
   { color: 'var(--color-cat-pink)', glow: 'var(--theme-drop-cat-pink)' },
   { color: 'var(--color-cat-amber)', glow: 'var(--theme-drop-cat-amber)' },
-  { color: 'var(--color-cat-teal)', glow: 'var(--theme-drop-cat-teal)' }
+  { color: 'var(--color-cat-teal)', glow: 'var(--theme-drop-cat-teal)' },
+  { color: 'var(--color-state-scheduled)', glow: 'var(--theme-glow-scheduled)' },
 ];
-const RING_RADII = [115, 95, 75, 55]; 
+const AGENCIES = ["DoE", "DoR", "JSV", "PWD", "HPSRLM"] as const;
+const RING_RADII = [115, 99, 83, 67, 51];
 const CENTER_X = 125;
 const CENTER_Y = 125;
-const STROKE_WIDTH = 14;
-const HOVER_STROKE_WIDTH = 18;
+const STROKE_WIDTH = 11;
+const HOVER_STROKE_WIDTH = 15;
 
 export function ValueConcentration({ activities }: ValueConcentrationProps) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
@@ -23,44 +25,46 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
   const { overallPercentage, items } = useMemo(() => {
     let totalCompleted = 0;
     let totalCount = 0;
-    const map = new Map<string, { completed: number; total: number }>();
+    const agencyStats = new Map(AGENCIES.map((agency) => [agency, { completed: 0, total: 0 }]));
 
     activities.forEach(a => {
       totalCount++;
       const isCompleted = a.completionStatus === 'Completed';
       if (isCompleted) totalCompleted++;
 
-      const ws = (a.component && a.component.trim() !== '') ? a.component.trim() : 'Unknown';
-      if (!map.has(ws)) map.set(ws, { completed: 0, total: 0 });
-      const stats = map.get(ws)!;
-      stats.total++;
-      if (isCompleted) stats.completed++;
+      const assignedAgencies = new Set(a.agencies);
+      AGENCIES.forEach((agency) => {
+        if (!assignedAgencies.has(agency)) return;
+
+        const stats = agencyStats.get(agency)!;
+
+        stats.total++;
+        if (isCompleted) stats.completed++;
+      });
     });
 
     const overallPct = totalCount > 0 ? (totalCompleted / totalCount) * 100 : 0;
 
-    const arr = Array.from(map.entries())
-      .map(([name, stats]) => ({
-        name,
+    const finalItems = AGENCIES.map((agency, i) => {
+      const stats = agencyStats.get(agency)!;
+
+      return {
+        name: agency,
         total: stats.total,
         completed: stats.completed,
-        percentage: stats.total > 0 ? (stats.completed / stats.total) * 100 : 0
-      }))
-      .sort((a, b) => b.total - a.total);
-
-    const finalItems = arr.slice(0, 4).map((item, i) => ({
-      ...item,
+        percentage: stats.total > 0 ? (stats.completed / stats.total) * 100 : 0,
       color: CHART_THEME[i % CHART_THEME.length].color,
-      glow: CHART_THEME[i % CHART_THEME.length].glow
-    }));
+        glow: CHART_THEME[i % CHART_THEME.length].glow,
+      };
+    });
 
     return { overallPercentage: overallPct, items: finalItems };
   }, [activities]);
 
-  if (items.length === 0) {
+  if (activities.length === 0) {
     return (
       <div className="w-full bg-surface rounded-[24px] p-5 flex flex-col shadow-sm border border-subtle">
-        <h3 className="text-[14px] font-semibold text-primary tracking-wide mb-6 z-10 relative">Component Completion</h3>
+        <h3 className="text-[14px] font-semibold text-primary tracking-wide mb-6 z-10 relative">Completion by Agency</h3>
         <div className="flex items-center justify-center text-[13px] text-muted italic py-10">
           No activities available
         </div>
@@ -128,7 +132,7 @@ export function ValueConcentration({ activities }: ValueConcentrationProps) {
       className="w-full h-full bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle relative overflow-hidden"
       onClick={handleContainerClick}
     >
-      <h3 className="text-base font-semibold text-primary tracking-wide mb-2 z-10 relative flex-shrink-0">Component Completion</h3>
+      <h3 className="text-base font-semibold text-primary tracking-wide mb-2 z-10 relative flex-shrink-0">Completion by Agency</h3>
 
       <div className="flex-1 w-full flex flex-col lg:flex-row items-center justify-center relative z-10 gap-8 lg:gap-12 lg:pr-8">
         
