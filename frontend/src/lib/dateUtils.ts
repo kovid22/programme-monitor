@@ -1,5 +1,13 @@
 import type { Activity } from "../data/types";
-import { isEffectivelyAtRisk } from "./statusUtils";
+import { PRESENTATION_STATES } from "../data/constants";
+import { getPresentationState, isEffectivelyAtRisk } from "./statusUtils";
+
+export type CalendarActivityStatus = "risk" | "scheduled" | "completed";
+
+export interface CalendarActivityDetail {
+  title: string;
+  calendarStatus: CalendarActivityStatus;
+}
 
 export interface HoverData {
   total: number;
@@ -8,8 +16,7 @@ export interface HoverData {
   completed: number;
   val: number;
   agencies: string;
-  titles: string[];
-  more: number;
+  activities: CalendarActivityDetail[];
 }
 
 export interface DayData {
@@ -32,7 +39,6 @@ export interface CalendarData {
   };
   tbcCount: number;
   hoverDataMap: Map<string, HoverData>;
-  maxDailyActivities: number;
   todayStr: string;
   availableMonths: string[];
   currentWindowStart: string;
@@ -48,6 +54,18 @@ export function toLocalDateString(d: Date): string {
 export function parseLocalDate(dStr: string): Date {
   const [y, m, d] = dStr.split('-').map(Number);
   return new Date(y, m - 1, d);
+}
+
+function getCalendarActivityStatus(activity: Activity): CalendarActivityStatus {
+  const presentationState = getPresentationState(activity);
+
+  if (presentationState === PRESENTATION_STATES.COMPLETED) {
+    return "completed";
+  }
+  if (presentationState === PRESENTATION_STATES.AT_RISK) {
+    return "risk";
+  }
+  return "scheduled";
 }
 
 export function calculateCalendarData(activities: Activity[], overrideStartMonth?: string): CalendarData {
@@ -134,15 +152,16 @@ export function calculateCalendarData(activities: Activity[], overrideStartMonth
   const startIdx = allMonthsContiguous.indexOf(windowStart);
   const windowMonths = allMonthsContiguous.slice(startIdx, startIdx + 3);
 
-  let maxDaily = 0;
   const hoverDataMap = new Map<string, HoverData>();
   
   for (const [dStr, acts] of dateMap.entries()) {
-    if (acts.length > maxDaily) maxDaily = acts.length;
-    
-    const completed = acts.filter(a => a.completionStatus === "Completed").length;
-    const risk = acts.filter(a => isEffectivelyAtRisk(a)).length;
-    const normal = acts.length - completed - risk;
+    const calendarActivities = acts.map(activity => ({
+      title: activity.title,
+      calendarStatus: getCalendarActivityStatus(activity)
+    }));
+    const completed = calendarActivities.filter(activity => activity.calendarStatus === "completed").length;
+    const risk = calendarActivities.filter(activity => activity.calendarStatus === "risk").length;
+    const normal = calendarActivities.filter(activity => activity.calendarStatus === "scheduled").length;
     
     const val = acts.reduce((acc, a) => acc + (a.estValue || 0), 0);
     const agencies = Array.from(new Set(acts.map(a => a.agency))).join(", ");
@@ -154,8 +173,7 @@ export function calculateCalendarData(activities: Activity[], overrideStartMonth
       completed,
       val,
       agencies,
-      titles: acts.map(a => a.title).slice(0, 5),
-      more: acts.length > 5 ? acts.length - 5 : 0
+      activities: calendarActivities
     });
   }
 
@@ -226,7 +244,6 @@ export function calculateCalendarData(activities: Activity[], overrideStartMonth
     },
     tbcCount,
     hoverDataMap,
-    maxDailyActivities: maxDaily,
     todayStr,
     availableMonths: allMonthsContiguous,
     currentWindowStart: windowStart
