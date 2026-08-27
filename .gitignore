@@ -32,6 +32,8 @@ htmlcov/
 # Keep the global JSON protection, but explicitly allow
 # legitimate project/frontend configuration below.
 *.json
+!frontend/firebase.json
+.firebase/
 
 # Frontend/package configuration that MUST be tracked
 !frontend/package.json
@@ -54,6 +56,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+.firebase/
 
 
 # ============================================================
