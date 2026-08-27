@@ -27,6 +27,8 @@ export type ActivitiesApiErrorKind =
   | 'authentication'
   | 'accessDenied'
   | 'authenticationService'
+  | 'rateLimited'
+  | 'refreshCooldown'
   | 'other';
 
 export class ActivitiesApiError extends Error {
@@ -77,6 +79,14 @@ export async function fetchActivities(forceRefresh: boolean = false): Promise<Fe
     }
     if (response.status === 503) {
       throw new ActivitiesApiError('authenticationService');
+    }
+    if (response.status === 429) {
+      const errorBody: { detail?: unknown } | null = await response.json().catch(() => null);
+      throw new ActivitiesApiError(
+        errorBody?.detail === 'Data was refreshed recently. Please wait before refreshing again.'
+          ? 'refreshCooldown'
+          : 'rateLimited'
+      );
     }
     throw new ActivitiesApiError('other');
   }
