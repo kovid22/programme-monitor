@@ -10,10 +10,12 @@ Rather than replacing an existing programme-data workflow, the application adds 
 
 The interface is organized around two levels of analysis:
 
-1. **Programme Overview** — understand overall delivery health, upcoming deadlines, risk, completion, and value concentration.
-2. **Activity Explorer** — investigate the individual activities behind those metrics using search, filtering, sorting, and activity details.
+1. **Programme Overview** - understand overall delivery health, upcoming deadlines, risk, completion, and value concentration.
+2. **Activity Explorer** - investigate the individual activities behind those metrics using search, filtering, sorting, and activity details.
 
 This allows users to move from portfolio-level monitoring into individual programme items without turning the dashboard into a data-entry system.
+
+Access to the deployed application is authenticated through Firebase Authentication. Only approved users can retrieve programme data from the backend.
 
 ---
 
@@ -27,10 +29,10 @@ The **Programme Overview** is the main analytical view of the application.
 
 Four headline indicators summarize the current programme state:
 
-* **Overall Completion** — percentage and number of completed activities.
-* **Activities at Risk** — activities currently classified as Immediate or Overdue, excluding work already completed.
-* **Estimated Value** — total estimated value represented by the selected programme scope.
-* **Value at Risk** — estimated value associated with activities currently requiring attention.
+* **Overall Completion** - percentage and number of completed activities.
+* **Activities at Risk** - activities currently classified as Immediate or Overdue, excluding work already completed.
+* **Estimated Value** - total estimated value represented by the selected programme scope.
+* **Value at Risk** - estimated value associated with activities currently requiring attention.
 
 These metrics respond to the dashboard filters, allowing the same overview to be used for the entire programme or a narrower operational scope.
 
@@ -49,6 +51,10 @@ Filtering applies across the dashboard rather than to a single visualization. Th
 The Delivery Calendar provides a time-oriented view of programme activity.
 
 Instead of reading target dates individually from a spreadsheet, users can see how delivery is distributed across the current timeline and identify periods containing immediate or overdue work.
+
+Dates containing multiple activities are represented together rather than being reduced to a single item. The calendar shows the number of activities scheduled for a date, while selecting that date opens the complete list with each activity's delivery status clearly identified.
+
+This makes congested delivery periods easier to understand without losing the activity-level detail behind them.
 
 ### Workstream Completion
 
@@ -104,7 +110,7 @@ The Explorer supports filtering across several dimensions:
 
 Available Sub-Workstreams respond to the selected Workstream scope, reducing irrelevant filter choices.
 
-The filtering interface also adapts to screen size so that the same functionality remains practical on desktop and mobile devices.
+The filtering interface includes responsive behavior for smaller screens, although the desktop experience remains the most complete and refined.
 
 ### Sorting
 
@@ -180,14 +186,17 @@ Google Sheets
       │
       ▼
    FastAPI
+Google Cloud Run
       │
       ├── Source validation
       ├── Data normalization
       ├── Timeline derivation
-      └── Server-side caching
+      ├── Server-side caching
+      └── Firebase token verification
       │
       ▼
  React Frontend
+Firebase Hosting
       │
       ├── Programme Overview
       └── Activity Explorer
@@ -198,6 +207,8 @@ Google Sheets
 Google Sheets is used as the operational data source because it remains accessible to team members who need to maintain programme information without requiring them to use the dashboard as a data-entry application.
 
 This preserves a familiar collaborative workflow while providing a separate interface optimized for analysis and monitoring.
+
+Programme Monitor does not write programme data back to Google Sheets. Data maintenance remains restricted to users with access to the source spreadsheet.
 
 ### FastAPI Backend
 
@@ -212,8 +223,39 @@ Its responsibilities include:
 * deriving timeline status
 * normalizing estimated values
 * caching recently retrieved data
+* validating Firebase authentication tokens
+* enforcing the approved-user access list
 
-This keeps spreadsheet-specific concerns away from the frontend.
+This keeps spreadsheet-specific and access-control concerns away from the frontend.
+
+### Authentication and Access Control
+
+Firebase Authentication provides the sign-in layer for the deployed application.
+
+After authentication, the frontend sends the user's Firebase ID token with API requests. The FastAPI backend verifies that token before returning programme data.
+
+Access is further restricted through an approved email allowlist. This means authentication alone does not automatically grant access to the programme dataset.
+
+The production access path is:
+
+```text
+User
+  │
+  ▼
+Firebase Authentication
+  │
+  ▼
+React / Firebase Hosting
+  │
+  │ Firebase ID Token
+  ▼
+FastAPI / Google Cloud Run
+  │
+  ▼
+Google Sheets
+```
+
+The Google Cloud Run service accesses Google Sheets through its assigned Google Cloud service identity rather than requiring service-account credential files to be stored in the deployed application.
 
 ### Data Synchronization
 
@@ -229,7 +271,7 @@ Programme Monitor currently prioritizes the desktop experience, where the dashbo
 
 ![Programme Monitor Dark Mode](docs/screenshots/dark_mode_preview.png)
 
-The interface includes responsive layout behavior in several areas, but mobile optimization is still a work in progress and some views may not yet adapt cleanly to smaller screens.
+The interface includes responsive layout behavior in several areas, but mobile optimization is still a work in progress and some views may require further refinement on smaller screens.
 
 The application includes user-selectable **light and dark themes**, along with explicit empty states for situations where the source contains no activities or filtering reduces the current scope to zero results.
 
@@ -239,25 +281,30 @@ The activity detail experience also preserves context: users can inspect an item
 
 ## Architecture
 
-The frontend and backend are deployed independently:
+The frontend and backend are deployed independently within the Google Cloud and Firebase ecosystem:
 
 ```text
 Google Sheets
       │
       ▼
 FastAPI API
-Azure App Service
+Google Cloud Run
+      ▲
       │
-      ▼
+Firebase Authentication
+      ▲
+      │
 React Application
-Azure Static Web Apps
+Firebase Hosting
 ```
 
-The frontend is built with **React 19, TypeScript, Vite, and Tailwind CSS v4**.
+The frontend is built with **React 19, TypeScript, Vite, Tailwind CSS v4, and Firebase Authentication**, and is deployed through **Firebase Hosting**.
 
-The backend uses **FastAPI on Python 3.14** with the **Google Sheets API** as its external data source.
+The backend uses **FastAPI on Python 3.14**, deployed to **Google Cloud Run**, with the **Google Sheets API** as its external data source.
 
-GitHub Actions handles the deployment workflows for both parts of the application.
+In production, Google Sheets access is handled through the Cloud Run service identity using Google Cloud Application Default Credentials.
+
+The frontend and backend therefore remain independently deployable while sharing Firebase Authentication as the access-control layer between the user and the API.
 
 ---
 
@@ -270,7 +317,8 @@ The dashboard does not create, edit, or delete programme activities. Source-data
 This separation keeps responsibilities clear:
 
 * **Google Sheets** is where authorized team members maintain programme data.
-* **FastAPI** validates and prepares that data.
+* **Firebase Authentication** controls access to the deployed application.
+* **FastAPI** validates, secures, and prepares programme data.
 * **Programme Monitor** provides the analytical and monitoring interface.
 
 The result is a lightweight dashboard that improves visibility over an existing operational workflow without requiring that workflow to be replaced.

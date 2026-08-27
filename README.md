@@ -1,8 +1,8 @@
 # Programme Monitor
 
 ![Version](https://img.shields.io/badge/version-v0.6.10-black)
-![Frontend](https://img.shields.io/badge/frontend-Azure%20Static%20Web%20Apps-blue)
-![Backend](https://img.shields.io/badge/backend-Azure%20App%20Service-blue)
+![Frontend](https://img.shields.io/badge/frontend-Firebase%20Hosting-orange)
+![Backend](https://img.shields.io/badge/backend-Google%20Cloud%20Run-blue)
 
 Programme Monitor is a lightweight operational analytics dashboard for tracking programme delivery, deadlines, risks, completion, and estimated value.
 
@@ -21,7 +21,9 @@ For a detailed product walkthrough, see [`WalkThrough.md`](WalkThrough.md).
 - **Activity explorer** with search, filtering, and multi-dimensional sorting
 - **Activity detail drawer** for individual programme items
 - **Timeline health states** including Overdue, Immediate, Due Soon, On Track, and TBC
+- **Delivery calendar** with support for multiple activities on the same date
 - **Google Sheets integration** for live programme data
+- **Firebase Authentication** with backend access control
 - **Manual data sync** with server-side caching
 - **Responsive light and dark interfaces**
 
@@ -32,25 +34,32 @@ For a detailed product walkthrough, see [`WalkThrough.md`](WalkThrough.md).
 - TypeScript
 - Vite
 - Tailwind CSS v4
+- Firebase Authentication
+- Firebase Hosting
 - Lucide React
 
 **Backend & Infrastructure**
 - FastAPI
 - Python 3.14
 - Google Sheets API
-- Azure Static Web Apps
-- Azure App Service
-- GitHub Actions
+- Google Cloud Run
+- Google Cloud service identity / Application Default Credentials
 
 ## Architecture
 
 ```text
 Google Sheets
     ↓
-FastAPI / Azure App Service
-    ↓
-React / Azure Static Web Apps
+FastAPI / Google Cloud Run
+    ↑
+Firebase Authentication
+    ↑
+React / Firebase Hosting
 ```
+
+Programme data remains maintained in Google Sheets, while access to the deployed dashboard is authenticated through Firebase.
+
+The backend validates Firebase ID tokens before returning programme data and restricts application access to approved users.
 
 ## Local Development
 
@@ -97,11 +106,11 @@ backend/.env.example
 
 ## Documentation
 
-See [`WalkThrough.md`](WalkThrough.md) for a deeper look at the interface, user flows, filtering, visualizations, and design decisions.
+See [`WalkThrough.md`](WalkThrough.md) for a deeper look at the interface, user flows, filtering, visualizations, architecture, authentication, and design decisions.
 
 ## Status
 
-**v0.5.13** — core application and live-data pipeline deployed.
+**v0.6.10** Firebase-authenticated production deployment running on Firebase Hosting and Google Cloud Run with Google Sheets as the source of truth.
 
 ## License
 
