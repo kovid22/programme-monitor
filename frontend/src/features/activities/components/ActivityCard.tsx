@@ -1,6 +1,5 @@
 import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
-import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
 import { formatCurrencyValue } from '../../../lib/utils';
 
 interface ActivityCardProps {
@@ -9,7 +8,6 @@ interface ActivityCardProps {
 }
 
 export function ActivityCard({ activity, onClick }: ActivityCardProps) {
-  const isRisk = isEffectivelyAtRisk(activity);
   const targetTiming = activity.targetTiming || 'Not Specified';
 
   return (
@@ -43,9 +41,7 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
         </div>
         <div className="flex flex-col gap-0.5 items-center">
           <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Timeline</span>
-          <span className={`text-xs font-semibold ${isRisk ? 'text-danger' : 'text-secondary'}`}>
-            {activity.timelineStatus}
-          </span>
+          <StatusBadge status={activity.timelineStatus} />
         </div>
         <div className="flex flex-col gap-0.5 items-end">
           <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Value</span>

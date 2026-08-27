@@ -16,7 +16,14 @@ def parse_target_date(date_str: str) -> Optional[str]:
         return None
         
     # Attempt to parse common date formats
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%Y/%m/%d", "%d-%m-%Y"):
+    for fmt in (
+        "%Y-%m-%d",
+        "%d/%m/%Y",
+        "%m/%d/%Y",
+        "%Y/%m/%d",
+        "%d-%m-%Y",
+        "%d-%b-%Y",
+    ):
         try:
             d = datetime.strptime(s, fmt).date()
             return d.strftime("%Y-%m-%d")

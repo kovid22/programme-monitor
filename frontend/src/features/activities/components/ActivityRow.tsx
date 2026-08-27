@@ -1,6 +1,5 @@
 import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
-import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
 import { formatCurrencyValue } from '../../../lib/utils';
 
 interface ActivityRowProps {
@@ -9,7 +8,6 @@ interface ActivityRowProps {
 }
 
 export function ActivityRow({ activity, onClick }: ActivityRowProps) {
-  const isRisk = isEffectivelyAtRisk(activity);
   const targetTiming = activity.targetTiming || 'Not Specified';
 
   return (
@@ -50,9 +48,7 @@ export function ActivityRow({ activity, onClick }: ActivityRowProps) {
       {/* Statuses */}
       <div className="col-span-1 flex flex-col items-end gap-1">
         <StatusBadge status={activity.completionStatus} />
-        <span className={`text-[10px] font-medium tracking-wide ${isRisk ? 'text-danger' : 'text-muted'}`}>
-          {activity.timelineStatus.toUpperCase()}
-        </span>
+        <StatusBadge status={activity.timelineStatus} />
       </div>
     </button>
   );

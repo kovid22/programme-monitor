@@ -6,6 +6,7 @@ export type CalendarActivityStatus = "risk" | "scheduled" | "completed";
 
 export interface CalendarActivityDetail {
   title: string;
+  agency: string;
   calendarStatus: CalendarActivityStatus;
 }
 
@@ -157,6 +158,7 @@ export function calculateCalendarData(activities: Activity[], overrideStartMonth
   for (const [dStr, acts] of dateMap.entries()) {
     const calendarActivities = acts.map(activity => ({
       title: activity.title,
+      agency: activity.agency,
       calendarStatus: getCalendarActivityStatus(activity)
     }));
     const completed = calendarActivities.filter(activity => activity.calendarStatus === "completed").length;

@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { X, Calendar, User, Briefcase, IndianRupee } from 'lucide-react';
 import type { Activity } from '../../../data/types';
 import { StatusBadge } from '../../../components/ui/Badge';
-import { isEffectivelyAtRisk } from '../../../lib/statusUtils';
 import { formatCurrencyValue } from '../../../lib/utils';
 
 interface ActivityDetailDrawerProps {
@@ -32,7 +31,6 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
 
   if (!activity) return null;
 
-  const isRisk = isEffectivelyAtRisk(activity);
   return (
     <>
       <div 
@@ -66,9 +64,7 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
             <h1 className="text-xl font-bold text-primary leading-tight">{activity.title}</h1>
             <div className="flex flex-wrap gap-2 mt-2">
               <StatusBadge status={activity.completionStatus} />
-              <span className={`px-2 py-1 rounded text-[10px] font-bold tracking-wide uppercase ${isRisk ? 'bg-danger/10 text-danger' : 'bg-surface border border-subtle text-secondary'}`}>
-                {activity.timelineStatus}
-              </span>
+              <StatusBadge status={activity.timelineStatus} />
             </div>
           </div>
 
