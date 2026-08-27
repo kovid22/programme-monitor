@@ -7,14 +7,13 @@ interface ProgrammeHealthProps {
     completionPercentage: number;
     atRiskActivities: Activity[];
     totalEstValue: number;
-    totalEstValueAtRisk: number;
+    dueSoonCount: number;
   };
 }
 
 export function ProgrammeHealth({ metrics }: ProgrammeHealthProps) {
   const completedActivities = Math.round((metrics.completionPercentage / 100) * metrics.totalActivities);
   const totalValParts = formatCurrencyParts(metrics.totalEstValue);
-  const riskValParts = formatCurrencyParts(metrics.totalEstValueAtRisk);
 
   return (
     <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -35,24 +34,8 @@ export function ProgrammeHealth({ metrics }: ProgrammeHealthProps) {
         </p>
       </div>
 
-      {/* At Risk */}
-      <div className="bg-kpi-secondary border border-subtle rounded-2xl px-5 py-3 lg:px-6 lg:py-4 flex flex-col justify-center min-h-[104px]">
-        <h3 className="text-xs font-semibold tracking-wider uppercase text-secondary mb-1">
-          Activities at Risk
-        </h3>
-        <div className="flex items-baseline mt-auto">
-          <span className="text-4xl font-light tracking-tighter text-primary leading-none">
-            {metrics.atRiskActivities.length}
-          </span>
-        </div>
-        <p className="text-xs font-medium text-danger mt-1 flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-state-risk"></span>
-          Immediate / Overdue
-        </p>
-      </div>
-
       {/* Estimated Value */}
-      <div className="bg-kpi-primary border border-subtle rounded-2xl px-5 py-3 lg:px-6 lg:py-4 flex flex-col justify-center min-h-[104px]">
+      <div className="bg-kpi-secondary border border-subtle rounded-2xl px-5 py-3 lg:px-6 lg:py-4 flex flex-col justify-center min-h-[104px]">
         <h3 className="text-xs font-semibold tracking-wider uppercase text-secondary mb-1">
           Estimated Value
         </h3>
@@ -68,20 +51,35 @@ export function ProgrammeHealth({ metrics }: ProgrammeHealthProps) {
         </p>
       </div>
 
-      {/* Value at Risk */}
-      <div className="bg-kpi-secondary border border-subtle rounded-2xl px-5 py-3 lg:px-6 lg:py-4 flex flex-col justify-center min-h-[104px]">
+      {/* Due Soon */}
+      <div className="bg-kpi-primary border border-subtle rounded-2xl px-5 py-3 lg:px-6 lg:py-4 flex flex-col justify-center min-h-[104px]">
         <h3 className="text-xs font-semibold tracking-wider uppercase text-secondary mb-1">
-          Value at Risk
+          Due Soon
         </h3>
         <div className="flex items-baseline mt-auto">
-          <span className="text-xl font-medium text-danger mr-1">₹</span>
-          <span className="text-4xl font-light tracking-tighter text-danger leading-none">
-            {riskValParts.value}
+          <span className="text-4xl font-light tracking-tighter text-primary leading-none">
+            {metrics.dueSoonCount}
           </span>
-          <span className="text-xl font-medium text-danger ml-1">{riskValParts.unit}</span>
         </div>
-        <p className="text-xs font-medium text-secondary mt-1">
-          At-risk estimated value
+        <p className="text-xs font-medium text-warning mt-1 flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-warning"></span>
+          Upcoming deadlines
+        </p>
+      </div>
+
+      {/* At Risk */}
+      <div className="bg-kpi-secondary border border-subtle rounded-2xl px-5 py-3 lg:px-6 lg:py-4 flex flex-col justify-center min-h-[104px]">
+        <h3 className="text-xs font-semibold tracking-wider uppercase text-secondary mb-1">
+          Activities at Risk
+        </h3>
+        <div className="flex items-baseline mt-auto">
+          <span className="text-4xl font-light tracking-tighter text-primary leading-none">
+            {metrics.atRiskActivities.length}
+          </span>
+        </div>
+        <p className="text-xs font-medium text-danger mt-1 flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-state-risk"></span>
+          Immediate / Overdue
         </p>
       </div>
 

@@ -28,9 +28,9 @@ export function useOverviewFilters(activities: Activity[]) {
   const completionPercentage = totalActivities === 0 ? 0 : Math.round((completedActivities / totalActivities) * 100);
 
   const atRiskActivities = filteredActivities.filter((a: Activity) => isEffectivelyAtRisk(a));
+  const dueSoonCount = filteredActivities.filter((a: Activity) => a.timelineStatus === "Due Soon").length;
   
   const totalEstValue = filteredActivities.reduce((sum: number, a: Activity) => sum + (a.estValue || 0), 0);
-  const totalEstValueAtRisk = atRiskActivities.reduce((sum: number, a: Activity) => sum + (a.estValue || 0), 0);
 
   // Available Filter Options
   const availableComponents = useMemo(() => {
@@ -75,7 +75,7 @@ export function useOverviewFilters(activities: Activity[]) {
       completionPercentage,
       atRiskActivities,
       totalEstValue,
-      totalEstValueAtRisk
+      dueSoonCount,
     },
     filters: {
       component,

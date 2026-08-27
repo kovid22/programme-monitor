@@ -98,6 +98,10 @@
 
     --theme-kpi-primary: #E7F0FD;
     --theme-kpi-secondary: #FDE7E7;
+
+    --scrollbar-thumb: #B8BEC8;
+    --scrollbar-thumb-hover: #8E96A3;
+    --scrollbar-track: transparent;
   }
 
   .dark {
@@ -141,6 +145,33 @@
 
     --theme-kpi-primary: rgba(120, 169, 255, 0.08);
     --theme-kpi-secondary: rgba(239, 68, 68, 0.04);
+
+    --scrollbar-thumb: #5E6470;
+    --scrollbar-thumb-hover: #7A818D;
+    --scrollbar-track: transparent;
+  }
+
+  * {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
   }
 }
 
