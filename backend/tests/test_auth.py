@@ -5,6 +5,8 @@ All Firebase token verification is mocked. No real Firebase project,
 network access, or credentials are required.
 """
 
+import logging
+
 import pytest
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
@@ -56,6 +58,27 @@ def client(monkeypatch):
         yield TestClient(app, raise_server_exceptions=False)
 
 
+class MutableMonotonicClock:
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def __call__(self) -> float:
+        return self.now
+
+    def advance(self, seconds: float) -> None:
+        self.now += seconds
+
+
+@pytest.fixture()
+def rate_limit_clock(monkeypatch):
+    from app import main
+    from app.rate_limit import ActivitiesRateLimiter
+
+    clock = MutableMonotonicClock()
+    monkeypatch.setattr(main, "activities_rate_limiter", ActivitiesRateLimiter(clock=clock))
+    return clock
+
+
 # ---------------------------------------------------------------------------
 # /api/health — must remain public
 # ---------------------------------------------------------------------------
@@ -64,6 +87,126 @@ def test_health_is_public(client):
     resp = client.get("/api/health")
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
+
+
+@pytest.fixture()
+def cors_client(monkeypatch):
+    from app.config import settings
+    from app.main import create_app
+
+    origin = "https://frontend.example.test"
+    monkeypatch.setattr(settings, "FRONTEND_ORIGIN", origin)
+    return TestClient(create_app()), origin
+
+
+def test_configured_origin_receives_cors_headers(cors_client):
+    client, origin = cors_client
+
+    response = client.get("/api/health", headers={"Origin": origin})
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == origin
+    assert response.headers["access-control-expose-headers"] == (
+        "X-Data-Refreshed-At, Retry-After"
+    )
+
+
+def test_unapproved_origin_receives_no_cors_allow_origin(cors_client):
+    client, _ = cors_client
+
+    response = client.get(
+        "/api/health",
+        headers={"Origin": "https://unapproved.example.test"},
+    )
+
+    assert response.status_code == 200
+    assert "access-control-allow-origin" not in response.headers
+
+
+def test_authorized_get_preflight_succeeds(cors_client):
+    client, origin = cors_client
+
+    response = client.options(
+        "/api/activities",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "Authorization",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == origin
+    assert response.headers["access-control-allow-methods"] == "GET"
+    assert "authorization" in response.headers["access-control-allow-headers"].lower()
+
+
+def test_post_preflight_is_rejected(cors_client):
+    client, origin = cors_client
+
+    response = client.options(
+        "/api/activities",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "POST" not in response.headers["access-control-allow-methods"]
+
+
+def test_unsupported_header_preflight_is_rejected(cors_client):
+    client, origin = cors_client
+
+    response = client.options(
+        "/api/activities",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "X-Unsupported-Header",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "x-unsupported-header" not in response.headers[
+        "access-control-allow-headers"
+    ].lower()
+
+
+@pytest.mark.parametrize("path", ["/docs", "/redoc", "/openapi.json"])
+def test_documentation_endpoints_are_available_in_development(monkeypatch, path):
+    from app.config import settings
+    from app.main import create_app
+
+    monkeypatch.setattr(settings, "ENVIRONMENT", "development")
+
+    response = TestClient(create_app()).get(path)
+
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize("path", ["/docs", "/redoc", "/openapi.json"])
+def test_documentation_endpoints_are_unavailable_in_production(monkeypatch, path):
+    from app.config import settings
+    from app.main import create_app
+
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+
+    response = TestClient(create_app()).get(path)
+
+    assert response.status_code == 404
+
+
+def test_health_remains_available_in_production(monkeypatch):
+    from app.config import settings
+    from app.main import create_app
+
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+
+    response = TestClient(create_app()).get("/api/health")
+
+    assert response.status_code == 200
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +230,221 @@ def test_force_refresh_does_not_bypass_auth(client):
         resp = client.get("/api/activities?force_refresh=true")
     assert resp.status_code == 401
     fetch_activities.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# /api/activities — safe programme-data errors
+# ---------------------------------------------------------------------------
+
+def test_value_error_response_and_logs_are_sanitized(client, caplog):
+    marker = "SUPER_SECRET_INTERNAL_VALUE"
+    caplog.set_level(logging.ERROR, logger="app.main")
+
+    with (
+        patch("app.auth.firebase_auth.verify_id_token", return_value=_make_decoded()),
+        patch("app.main.fetch_activities_with_timestamp", side_effect=ValueError(marker)),
+    ):
+        response = client.get(
+            "/api/activities",
+            headers={"Authorization": "Bearer valid.token.here"},
+        )
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Unable to load programme data."}
+    assert marker not in response.text
+    assert marker not in caplog.text
+
+
+def test_unexpected_error_response_is_sanitized(client):
+    marker = "SUPER_SECRET_INTERNAL_VALUE"
+
+    with (
+        patch("app.auth.firebase_auth.verify_id_token", return_value=_make_decoded()),
+        patch("app.main.fetch_activities_with_timestamp", side_effect=RuntimeError(marker)),
+    ):
+        response = client.get(
+            "/api/activities",
+            headers={"Authorization": "Bearer valid.token.here"},
+        )
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Internal server error."}
+    assert marker not in response.text
+
+
+def test_data_source_error_returns_safe_503(client):
+    from app.services.google_sheets import ProgrammeDataSourceError
+
+    with (
+        patch("app.auth.firebase_auth.verify_id_token", return_value=_make_decoded()),
+        patch(
+            "app.main.fetch_activities_with_timestamp",
+            side_effect=ProgrammeDataSourceError("SUPER_SECRET_INTERNAL_VALUE"),
+        ),
+    ):
+        response = client.get(
+            "/api/activities",
+            headers={"Authorization": "Bearer valid.token.here"},
+        )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Programme data is temporarily unavailable."}
+    assert "SUPER_SECRET_INTERNAL_VALUE" not in response.text
+
+
+# ---------------------------------------------------------------------------
+# /api/activities — per-user rate limits and refresh cooldown
+# ---------------------------------------------------------------------------
+
+def test_normal_requests_allow_60_then_return_429(client, rate_limit_clock):
+    with (
+        patch("app.auth.firebase_auth.verify_id_token", return_value=_make_decoded()),
+        patch("app.main.fetch_activities_with_timestamp", return_value=([], None)),
+    ):
+        for _ in range(60):
+            response = client.get(
+                "/api/activities",
+                headers={"Authorization": "Bearer valid.token.here"},
+            )
+            assert response.status_code == 200
+
+        response = client.get(
+            "/api/activities",
+            headers={"Authorization": "Bearer valid.token.here"},
+        )
+
+    assert response.status_code == 429
+    assert response.json() == {"detail": "Too many requests. Please try again shortly."}
+    assert int(response.headers["retry-after"]) >= 1
+    assert client.get("/api/health").status_code == 200
+
+
+def test_normal_rate_limits_are_independent_per_user(
+    client,
+    rate_limit_clock,
+    monkeypatch,
+):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "ALLOWED_EMAILS", "first@example.com,second@example.com")
+
+    def verify_id_token(token, **_kwargs):
+        return _make_decoded(email=f"{token}@example.com")
+
+    with (
+        patch("app.auth.firebase_auth.verify_id_token", side_effect=verify_id_token),
+        patch("app.main.fetch_activities_with_timestamp", return_value=([], None)),
+    ):
+        for _ in range(60):
+            response = client.get(
+                "/api/activities",
+                headers={"Authorization": "Bearer first"},
+            )
+            assert response.status_code == 200
+
+        first_response = client.get(
+            "/api/activities",
+            headers={"Authorization": "Bearer first"},
+        )
+        second_response = client.get(
+            "/api/activities",
+            headers={"Authorization": "Bearer second"},
+        )
+
+    assert first_response.status_code == 429
+    assert second_response.status_code == 200
+
+
+def test_forced_refresh_has_per_user_cooldown(client, rate_limit_clock):
+    with (
+        patch("app.auth.firebase_auth.verify_id_token", return_value=_make_decoded()),
+        patch("app.main.fetch_activities_with_timestamp", return_value=([], None)),
+    ):
+        first_response = client.get(
+            "/api/activities?force_refresh=true",
+            headers={"Authorization": "Bearer valid.token.here"},
+        )
+        cooldown_response = client.get(
+            "/api/activities?force_refresh=true",
+            headers={"Authorization": "Bearer valid.token.here"},
+        )
+        rate_limit_clock.advance(30)
+        after_cooldown_response = client.get(
+            "/api/activities?force_refresh=true",
+            headers={"Authorization": "Bearer valid.token.here"},
+        )
+
+    assert first_response.status_code == 200
+    assert cooldown_response.status_code == 429
+    assert cooldown_response.json() == {
+        "detail": "Data was refreshed recently. Please wait before refreshing again."
+    }
+    assert 1 <= int(cooldown_response.headers["retry-after"]) <= 30
+    assert after_cooldown_response.status_code == 200
+
+
+def test_refresh_cooldown_rejections_do_not_consume_normal_quota(
+    client,
+    rate_limit_clock,
+):
+    with (
+        patch("app.auth.firebase_auth.verify_id_token", return_value=_make_decoded()),
+        patch("app.main.fetch_activities_with_timestamp", return_value=([], None)),
+    ):
+        first_refresh = client.get(
+            "/api/activities?force_refresh=true",
+            headers={"Authorization": "Bearer valid.token.here"},
+        )
+        for _ in range(10):
+            cooldown_response = client.get(
+                "/api/activities?force_refresh=true",
+                headers={"Authorization": "Bearer valid.token.here"},
+            )
+            assert cooldown_response.status_code == 429
+
+        for _ in range(59):
+            normal_response = client.get(
+                "/api/activities",
+                headers={"Authorization": "Bearer valid.token.here"},
+            )
+            assert normal_response.status_code == 200
+
+        limit_response = client.get(
+            "/api/activities",
+            headers={"Authorization": "Bearer valid.token.here"},
+        )
+
+    assert first_refresh.status_code == 200
+    assert limit_response.status_code == 429
+
+
+def test_forced_refresh_cooldowns_are_independent_per_user(
+    client,
+    rate_limit_clock,
+    monkeypatch,
+):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "ALLOWED_EMAILS", "first@example.com,second@example.com")
+
+    def verify_id_token(token, **_kwargs):
+        return _make_decoded(email=f"{token}@example.com")
+
+    with (
+        patch("app.auth.firebase_auth.verify_id_token", side_effect=verify_id_token),
+        patch("app.main.fetch_activities_with_timestamp", return_value=([], None)),
+    ):
+        first_response = client.get(
+            "/api/activities?force_refresh=true",
+            headers={"Authorization": "Bearer first"},
+        )
+        second_response = client.get(
+            "/api/activities?force_refresh=true",
+            headers={"Authorization": "Bearer second"},
+        )
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
 
 
 # ---------------------------------------------------------------------------
@@ -117,6 +475,22 @@ def test_activities_expired_token_returns_401(client):
             "/api/activities",
             headers={"Authorization": "Bearer expired.token.here"},
         )
+    assert resp.status_code == 401
+    assert resp.headers["www-authenticate"] == "Bearer"
+
+
+def test_activities_revoked_token_returns_401(client):
+    from firebase_admin.auth import RevokedIdTokenError
+
+    with patch(
+        "app.auth.firebase_auth.verify_id_token",
+        side_effect=RevokedIdTokenError("revoked"),
+    ):
+        resp = client.get(
+            "/api/activities",
+            headers={"Authorization": "Bearer revoked.token.here"},
+        )
+
     assert resp.status_code == 401
     assert resp.headers["www-authenticate"] == "Bearer"
 
@@ -171,7 +545,7 @@ def test_activities_approved_user_passes_auth(client):
         patch(
             "app.auth.firebase_auth.verify_id_token",
             return_value=_make_decoded(),
-        ),
+        ) as verify_id_token,
         patch("app.main.fetch_activities_with_timestamp", return_value=([], "2026-08-26T00:00:00Z")),
     ):
         resp = client.get(
@@ -181,6 +555,7 @@ def test_activities_approved_user_passes_auth(client):
     assert resp.status_code == 200
     assert resp.json() == {"activities": [], "count": 0}
     assert resp.headers["x-data-refreshed-at"] == "2026-08-26T00:00:00Z"
+    verify_id_token.assert_called_once_with("valid.token.here", check_revoked=True)
 
 
 # ---------------------------------------------------------------------------

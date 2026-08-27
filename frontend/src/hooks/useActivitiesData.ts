@@ -31,6 +31,14 @@ export function useActivitiesData(onAuthenticationFailure: () => Promise<void>) 
           setError('Authentication service is temporarily unavailable. Please try again later.');
           return;
         }
+        if (error.kind === 'rateLimited') {
+          setError('Too many requests. Please try again in a moment.');
+          return;
+        }
+        if (error.kind === 'refreshCooldown') {
+          setError('Data was refreshed recently. Please wait before refreshing again.');
+          return;
+        }
       }
       setError('Unable to load programme data.');
     } finally {

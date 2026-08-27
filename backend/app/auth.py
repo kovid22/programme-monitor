@@ -117,7 +117,10 @@ def require_approved_user(
 
     # --- 3. Verify the ID token ----------------------------------------------
     try:
-        decoded: dict[str, Any] = firebase_auth.verify_id_token(token)
+        decoded: dict[str, Any] = firebase_auth.verify_id_token(
+            token,
+            check_revoked=True,
+        )
     except firebase_auth.ExpiredIdTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

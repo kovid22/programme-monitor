@@ -14,6 +14,15 @@ logger = logging.getLogger(__name__)
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
+
+class ProgrammeDataSourceError(Exception):
+    """Raised when Google Sheets cannot provide programme data."""
+
+
+class ProgrammeDataConfigurationError(ValueError):
+    """Raised when programme data configuration or schema is invalid."""
+
+
 def get_sheets_service():
     info = settings.service_account_info
 
@@ -27,7 +36,9 @@ def get_sheets_service():
         return service
     except Exception as exc:
         logger.error("Failed to initialize Google Sheets credentials.")
-        raise ValueError("Unable to initialize Google Sheets credentials.") from exc
+        raise ProgrammeDataConfigurationError(
+            "Unable to initialize Google Sheets credentials."
+        ) from exc
 
 def parse_estimated_value(val: str) -> Optional[float]:
     if not val:
@@ -69,7 +80,7 @@ _cache = ActivityCache(180)
 
 def _fetch_from_google_sheets() -> List[Activity]:
     if not settings.GOOGLE_SHEET_ID:
-        raise ValueError("GOOGLE_SHEET_ID is not configured.")
+        raise ProgrammeDataConfigurationError("GOOGLE_SHEET_ID is not configured.")
         
     try:
         service = get_sheets_service()
@@ -80,12 +91,18 @@ def _fetch_from_google_sheets() -> List[Activity]:
         ).execute()
         
         values = result.get('values', [])
-    except HttpError as e:
-        logger.error(f"Google Sheets API Error: {e}")
-        raise ValueError("Failed to fetch data from Google Sheets API.")
-    except Exception as e:
-        logger.error(f"Error fetching sheets: {e}")
-        raise ValueError("Failed to initialize Google Sheets client.")
+    except ProgrammeDataConfigurationError:
+        raise
+    except HttpError as exc:
+        logger.error("Google Sheets API request failed.")
+        raise ProgrammeDataSourceError(
+            "Failed to fetch data from Google Sheets API."
+        ) from exc
+    except Exception as exc:
+        logger.error("Google Sheets client request failed.")
+        raise ProgrammeDataSourceError(
+            "Failed to initialize Google Sheets client."
+        ) from exc
         
     if not values:
         return []
@@ -108,7 +125,9 @@ def _fetch_from_google_sheets() -> List[Activity]:
     comp_status_idx = get_index(['completion status', 'status'])
     
     if ws_idx == -1 or activity_idx == -1:
-        raise ValueError("Missing required headers: Workstream or Activity.")
+        raise ProgrammeDataConfigurationError(
+            "Missing required programme data headers."
+        )
         
     activities = []
     
@@ -125,7 +144,7 @@ def _fetch_from_google_sheets() -> List[Activity]:
         activity_title = get_val(activity_idx)
         
         if not workstream or not activity_title:
-            logger.warning(f"Row {i} skipped: Missing workstream or activity title.")
+            logger.warning("Skipping programme row with required fields missing.")
             continue
             
         id_val = get_val(id_idx) if id_idx != -1 else None
@@ -134,8 +153,8 @@ def _fetch_from_google_sheets() -> List[Activity]:
         
         try:
             completion_status = normalize_completion_status(get_val(comp_status_idx))
-        except ValueError as e:
-            logger.warning(f"Row {i} skipped: {e}")
+        except ValueError:
+            logger.warning("Skipping programme row with invalid completion status.")
             continue
             
         timeline_status = determine_timeline_status(parsed_target_date, raw_target_date)
