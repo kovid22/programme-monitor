@@ -18,7 +18,7 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
     >
       <div className="flex justify-between items-start gap-3 w-full">
         <div className="flex flex-col">
-          {activity.id && <span className="text-[10px] font-mono text-muted mb-0.5">{activity.id}</span>}
+          {activity.id && <span className="mb-1 text-xs font-mono text-muted">{activity.id}</span>}
           <span className="text-sm font-semibold text-primary leading-tight">{activity.title}</span>
         </div>
         <div className="shrink-0 pt-0.5">
@@ -26,26 +26,26 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-1 w-full bg-surface/50 rounded-lg p-3">
+      <div className="flex w-full flex-col gap-1.5 rounded-lg bg-surface/50 p-3">
         <div className="flex justify-between items-center w-full">
-          <span className="text-xs font-medium text-primary truncate mr-2">{activity.component}</span>
-          <span className="text-[10px] text-secondary truncate shrink-0 max-w-[40%] text-right">{activity.agency}</span>
+          <span className="mr-2 truncate text-[13px] font-medium text-primary">{activity.component}</span>
+          <span className="max-w-[40%] shrink-0 truncate text-right text-xs text-secondary">{activity.agency}</span>
         </div>
-        <span className="text-[10px] text-muted truncate">{activity.subComponent}</span>
+        <span className="truncate text-xs text-muted">{activity.subComponent}</span>
       </div>
 
       <div className="flex justify-between items-end w-full mt-1 px-1">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Target / Timing</span>
-          <span className="text-xs text-primary font-medium">{targetTiming}</span>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted">Target / Timing</span>
+          <span className="text-[13px] font-medium text-primary">{targetTiming}</span>
         </div>
-        <div className="flex flex-col gap-0.5 items-center">
-          <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Timeline</span>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted">Timeline</span>
           <StatusBadge status={activity.timelineStatus} />
         </div>
-        <div className="flex flex-col gap-0.5 items-end">
-          <span className="text-[9px] uppercase tracking-wider text-muted font-medium">Value</span>
-          <span className="text-xs font-semibold text-primary">
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted">Value</span>
+          <span className="text-[13px] font-semibold text-primary">
             {activity.estValue !== null && activity.estValue > 0 ? formatCurrencyValue(activity.estValue) : '-'}
           </span>
         </div>

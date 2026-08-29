@@ -33,10 +33,11 @@ export function ActivityList({ activities, onActivityClick, resetFilters, hasAct
   return (
     <div className="w-full bg-canvas border border-subtle md:rounded-2xl overflow-hidden shadow-sm shadow-black/5 -mx-4 md:mx-0 w-[calc(100%+2rem)] md:w-full">
       {/* Desktop Header */}
-      <div className="hidden md:grid grid-cols-12 gap-4 py-3 px-5 bg-surface border-b border-subtle text-[10px] font-semibold uppercase tracking-wider text-muted sticky top-0 z-10">
-        <div className="col-span-4 pr-2">Activity</div>
-        <div className="col-span-3 pr-2">Context</div>
+      <div className="hidden md:grid grid-cols-12 gap-4 py-3.5 px-5 bg-surface border-b border-subtle text-xs font-semibold uppercase tracking-wider text-muted sticky top-0 z-10">
+        <div className="col-span-2 pr-2">Component</div>
         <div className="col-span-2 pr-2">Agency</div>
+        <div className="col-span-3 pr-2">Activity</div>
+        <div className="col-span-2 pr-2">Sub-Component</div>
         <div className="col-span-1">Target</div>
         <div className="col-span-1 text-right pr-2">Value</div>
         <div className="col-span-1 text-right">Status</div>

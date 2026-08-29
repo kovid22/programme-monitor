@@ -81,7 +81,7 @@ export function DeliveryFlow({ activities, selectedAgencies }: DeliveryFlowProps
       className="w-full h-full min-h-[300px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle relative"
       onMouseLeave={() => { setHoveredSegment(null); setTooltip(null); }}
     >
-      <div className="mb-8">
+      <div className="mb-5">
         <h3 className="text-base font-semibold text-primary tracking-wide">Agency Delivery Exposure</h3>
       </div>
 
@@ -153,7 +153,7 @@ export function DeliveryFlow({ activities, selectedAgencies }: DeliveryFlowProps
             </div>
 
             <div className="w-[60px] sm:w-[70px] shrink-0 text-right">
-              <span className="text-[13px] font-medium text-muted">
+              <span className="text-[13px] font-medium text-secondary">
                 {formatCurrencyValue(agency.total)}
               </span>
             </div>
@@ -177,7 +177,7 @@ export function DeliveryFlow({ activities, selectedAgencies }: DeliveryFlowProps
           className="fixed z-50 pointer-events-none bg-surface border border-subtle shadow-lg rounded-xl p-3.5 flex flex-col min-w-[180px]"
           style={{ left: tooltip.x + 16, top: tooltip.y + 16 }}
         >
-          <span className="text-[11px] font-semibold tracking-wider text-muted uppercase mb-1">{tooltip.agency}</span>
+          <span className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">{tooltip.agency}</span>
           <div className="flex items-center gap-2 mb-2">
             <div className={cn("w-2 h-2 rounded-full", STATE_CLASSES[tooltip.state])} />
             <span className="text-[13px] font-medium text-primary">{tooltip.state}</span>

@@ -1,235 +1,271 @@
-import { useMemo, useState } from "react";
-import type { Activity } from "../../../data/types";
+import { useMemo, useState } from 'react';
+import type { Activity } from '../../../data/types';
+import { cn } from '../../../lib/utils';
 
 interface ValueConcentrationProps {
   activities: Activity[];
   selectedAgencies: string[];
 }
 
-const CHART_THEME = [
-  { color: 'var(--color-cat-purple)', glow: 'var(--theme-drop-cat-purple)' },
-  { color: 'var(--color-cat-pink)', glow: 'var(--theme-drop-cat-pink)' },
-  { color: 'var(--color-cat-amber)', glow: 'var(--theme-drop-cat-amber)' },
-  { color: 'var(--color-cat-teal)', glow: 'var(--theme-drop-cat-teal)' },
-  { color: 'var(--color-state-scheduled)', glow: 'var(--theme-glow-scheduled)' },
-];
-const AGENCIES = ["DoE", "DoR", "JSV", "PWD", "HPSRLM"] as const;
-const RING_RADII = [115, 99, 83, 67, 51];
-const CENTER_X = 125;
-const CENTER_Y = 125;
-const STROKE_WIDTH = 11;
-const HOVER_STROKE_WIDTH = 15;
+const AGENCIES = ['DoE', 'DoR', 'JSV', 'PWD', 'HPSRLM'] as const;
+const AGENCY_COLORS = [
+  'var(--color-cat-purple)',
+  'var(--color-cat-pink)',
+  'var(--color-cat-amber)',
+  'var(--color-cat-teal)',
+  'var(--color-state-scheduled)',
+] as const;
+
+const CHART_WIDTH = 420;
+const CHART_HEIGHT = 240;
+const CHART_CENTER_X = CHART_WIDTH / 2;
+const CHART_CENTER_Y = CHART_HEIGHT / 2;
+const DONUT_RADIUS = 90;
+const DONUT_STROKE_WIDTH = 40;
+
+function getAnnularSectorPath(cx: number, cy: number, r: number, R: number, startAngle: number, endAngle: number, d: number) {
+  if (endAngle - startAngle <= 0) return "";
+  
+  const nx1 = -Math.sin(startAngle);
+  const ny1 = Math.cos(startAngle);
+  const nx2 = Math.sin(endAngle);
+  const ny2 = -Math.cos(endAngle);
+
+  const x1 = cx + R * Math.cos(startAngle) + d * nx1;
+  const y1 = cy + R * Math.sin(startAngle) + d * ny1;
+  const x2 = cx + R * Math.cos(endAngle) + d * nx2;
+  const y2 = cy + R * Math.sin(endAngle) + d * ny2;
+  const x3 = cx + r * Math.cos(endAngle) + d * nx2;
+  const y3 = cy + r * Math.sin(endAngle) + d * ny2;
+  const x4 = cx + r * Math.cos(startAngle) + d * nx1;
+  const y4 = cy + r * Math.sin(startAngle) + d * ny1;
+
+  const largeArcFlag = endAngle - startAngle <= Math.PI ? 0 : 1;
+  return `M ${x1} ${y1} A ${R} ${R} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${x3} ${y3} A ${r} ${r} 0 ${largeArcFlag} 0 ${x4} ${y4} Z`;
+}
 
 export function ValueConcentration({ activities, selectedAgencies }: ValueConcentrationProps) {
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [hoveredAgency, setHoveredAgency] = useState<string | null>(null);
 
-  const { overallPercentage, items } = useMemo(() => {
+  const { agencyWorkload, isEmpty } = useMemo(() => {
     const agenciesToDisplay = selectedAgencies.length > 0 ? selectedAgencies : AGENCIES;
-    let totalCompleted = 0;
-    let totalCount = 0;
-    const agencyStats = new Map(agenciesToDisplay.map((agency) => [agency, { completed: 0, total: 0 }]));
+    const assignmentCounts = new Map(agenciesToDisplay.map((agency) => [agency, 0]));
 
-    activities.forEach(a => {
-      totalCount++;
-      const isCompleted = a.completionStatus === 'Completed';
-      if (isCompleted) totalCompleted++;
+    let total = 0;
+    activities.forEach((activity) => {
+      const assignedAgencies = new Set(activity.agencies);
 
-      const assignedAgencies = new Set(a.agencies);
       agenciesToDisplay.forEach((agency) => {
-        if (!assignedAgencies.has(agency)) return;
-
-        const stats = agencyStats.get(agency)!;
-
-        stats.total++;
-        if (isCompleted) stats.completed++;
+        if (assignedAgencies.has(agency)) {
+          assignmentCounts.set(agency, (assignmentCounts.get(agency) ?? 0) + 1);
+          total++;
+        }
       });
     });
 
-    const overallPct = totalCount > 0 ? (totalCompleted / totalCount) * 100 : 0;
-
-    const finalItems = agenciesToDisplay.map((agency) => {
-      const stats = agencyStats.get(agency)!;
-      const themeIndex = AGENCIES.findIndex((knownAgency) => knownAgency === agency);
-      const theme = CHART_THEME[themeIndex >= 0 ? themeIndex : 0];
-
+    const workloads = agenciesToDisplay.map((agency, colorIndex) => {
+      const count = assignmentCounts.get(agency) ?? 0;
+      const exactPercentage = total > 0 ? (count / total) * 100 : 0;
+      const floored = Math.floor(exactPercentage);
+      const share = total > 0 ? count / total : 0;
+      
       return {
         name: agency,
-        total: stats.total,
-        completed: stats.completed,
-        percentage: stats.total > 0 ? (stats.completed / stats.total) * 100 : 0,
-        color: theme.color,
-        glow: theme.glow,
+        count,
+        share,
+        remainder: exactPercentage - floored,
+        displayPercentage: floored,
+        segmentStart: 0,
+        color: AGENCY_COLORS[colorIndex >= 0 ? colorIndex : 0],
+      };
+    }).sort((a, b) => b.share - a.share);
+
+    if (total > 0) {
+      const totalFloored = workloads.reduce((sum, w) => sum + w.displayPercentage, 0);
+      const diff = 100 - totalFloored;
+
+      const sortedIndices = workloads
+        .map((w, i) => ({ i, remainder: w.remainder }))
+        .sort((a, b) => b.remainder - a.remainder);
+
+      for (let i = 0; i < diff; i++) {
+        workloads[sortedIndices[i].i].displayPercentage += 1;
+      }
+    }
+
+    const finalWorkloads = workloads.map((w, index) => {
+      const precedingSum = workloads
+        .slice(0, index)
+        .reduce((sum, precedingWorkload) => sum + precedingWorkload.share, 0);
+
+      // By starting at 1 and subtracting, we reverse the visual placement 
+      // so the hierarchy flows anti-clockwise from 12 o'clock.
+      const segmentStart = 1 - precedingSum - w.share;
+
+      return {
+        ...w,
+        segmentStart,
       };
     });
 
-    return { overallPercentage: overallPct, items: finalItems };
+    return {
+      agencyWorkload: finalWorkloads,
+      isEmpty: total === 0,
+    };
   }, [activities, selectedAgencies]);
 
-  if (activities.length === 0) {
+
+  const chartLabels = useMemo(() => {
+    const validAgencies = agencyWorkload.filter((a) => a.count > 0);
+    return validAgencies.map((agency) => {
+      const proportionMidpoint = agency.segmentStart + (agency.share / 2);
+      const angle = (-Math.PI / 2) + (proportionMidpoint * Math.PI * 2);
+      const side = Math.cos(angle) >= 0 ? 'right' : 'left';
+
+      const ELBOW_RADIUS = DONUT_RADIUS + (DONUT_STROKE_WIDTH / 2) + 12;
+      const elbowX = CHART_CENTER_X + Math.cos(angle) * ELBOW_RADIUS;
+      const elbowY = CHART_CENTER_Y + Math.sin(angle) * ELBOW_RADIUS;
+
+      const HORIZONTAL_LENGTH = 28;
+      const lineEndX = side === 'right' ? elbowX + HORIZONTAL_LENGTH : elbowX - HORIZONTAL_LENGTH;
+      const textX = side === 'right' ? lineEndX + 10 : lineEndX - 10;
+
+      return {
+        ...agency,
+        angle,
+        side,
+        labelY: elbowY,
+        elbowX,
+        lineEndX,
+        textX,
+      };
+    });
+  }, [agencyWorkload]);
+
+  if (isEmpty) {
     return (
-      <div className="w-full bg-surface rounded-[24px] p-5 flex flex-col shadow-sm border border-subtle">
-        <h3 className="text-[14px] font-semibold text-primary tracking-wide mb-6 z-10 relative">Completion by Agency</h3>
-        <div className="flex items-center justify-center text-[13px] text-muted italic py-10">
-          No activities available
+      <div className="workload-chart-card flex h-full w-full flex-col rounded-[24px] border border-subtle bg-surface p-5 shadow-sm lg:p-6">
+        <h3 className="mb-3 text-base font-semibold tracking-wide text-primary">Agency Workload Distribution</h3>
+        <div className="flex flex-1 items-center justify-center text-sm text-secondary min-h-0">
+          No workload in current scope
         </div>
       </div>
     );
   }
 
-  const hoverItem = hoveredIdx !== null ? items[hoveredIdx] : null;
-  const centerValue = hoverItem ? Math.round(hoverItem.percentage) : Math.round(overallPercentage);
+  const renderDonut = (withLabels: boolean) => (
+    <svg
+      viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+      className={cn("overflow-visible", withLabels ? "w-full max-w-[420px] h-auto" : "h-[172px] w-[220px]")}
+      role="img"
+      aria-label="Agency workload distribution"
+    >
+      <g transform={`rotate(-90 ${CHART_CENTER_X} ${CHART_CENTER_Y})`}>
+        {agencyWorkload.map((agency) => {
+          if (agency.count === 0) return null;
+          
+          const CORNER_RADIUS = 3;
+          const VISUAL_GAP = 3;
+          
+          // Using parallel offset math (secants), d is the perpendicular offset distance.
+          // We want the final visual gap to be VISUAL_GAP.
+          // Because strokeLinejoin="round" expands the slice outward by CORNER_RADIUS,
+          // the mathematical path must be inset by an additional CORNER_RADIUS.
+          // The distance from the center of the gap to the mathematical path boundary is therefore:
+          const d = (VISUAL_GAP / 2) + CORNER_RADIUS;
+          
+          const startAngle = agency.segmentStart * 2 * Math.PI;
+          const endAngle = (agency.segmentStart + agency.share) * 2 * Math.PI;
+          
+          const outerR = DONUT_RADIUS + (DONUT_STROKE_WIDTH / 2) - CORNER_RADIUS;
+          const innerR = DONUT_RADIUS - (DONUT_STROKE_WIDTH / 2) + CORNER_RADIUS;
 
-  const handleContainerClick = () => setHoveredIdx(null);
+          return (
+            <path
+              key={agency.name}
+              d={getAnnularSectorPath(CHART_CENTER_X, CHART_CENTER_Y, innerR, outerR, startAngle, endAngle, d)}
+              fill={agency.color}
+              stroke={agency.color}
+              strokeWidth={CORNER_RADIUS * 2}
+              strokeLinejoin="round"
+              className={cn(
+                "transition-opacity duration-150 cursor-pointer",
+                hoveredAgency && hoveredAgency !== agency.name && "opacity-30",
+              )}
+              onMouseEnter={() => setHoveredAgency(agency.name)}
+              onMouseLeave={() => setHoveredAgency(null)}
+            />
+          );
+        })}
+      </g>
 
-  const renderLegendBlock = (item: typeof items[0], i: number) => {
-    const isHovered = hoveredIdx === i;
-    const isMuted = hoveredIdx !== null && hoveredIdx !== i;
-    
-    return (
-      <div 
-        key={item.name}
-        className={`flex items-start gap-2.5 transition-all duration-300 cursor-pointer outline-none relative z-20
-          ${isHovered ? 'scale-[1.02] drop-shadow-sm' : ''}
-          ${isMuted ? 'opacity-30 grayscale-[20%]' : 'opacity-100'}`}
-        onMouseEnter={() => setHoveredIdx(i)}
-        onMouseLeave={() => setHoveredIdx(null)}
-        onClick={(e) => {
-          e.stopPropagation();
-          setHoveredIdx(hoveredIdx === i ? null : i);
-        }}
-        onFocus={() => setHoveredIdx(i)}
-        onBlur={() => setHoveredIdx(null)}
-        tabIndex={0}
-      >
-        <span 
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-[3px] transition-transform duration-300" 
-          style={{ 
-            backgroundColor: item.color,
-            transform: isHovered ? 'scale(1.2)' : 'scale(1)'
-          }} 
-        />
-        <div className="flex flex-col">
-          <span 
-            className="text-[13px] font-semibold text-secondary truncate max-w-[140px]" 
-            title={item.name}
+      {withLabels && chartLabels.map((label) => {
+        const anchorX = CHART_CENTER_X + (Math.cos(label.angle) * (DONUT_RADIUS + (DONUT_STROKE_WIDTH / 2)));
+        const anchorY = CHART_CENTER_Y + (Math.sin(label.angle) * (DONUT_RADIUS + (DONUT_STROKE_WIDTH / 2)));
+        const textAnchor = label.side === 'right' ? 'start' : 'end';
+        const isMuted = hoveredAgency !== null && hoveredAgency !== label.name;
+
+        return (
+          <g
+            key={label.name}
+            className={cn("outline-none transition-opacity duration-150", isMuted && "opacity-35")}
+            onMouseEnter={() => setHoveredAgency(label.name)}
+            onMouseLeave={() => setHoveredAgency(null)}
+            onFocus={() => setHoveredAgency(label.name)}
+            onBlur={() => setHoveredAgency(null)}
+            tabIndex={0}
+            role="group"
+            aria-label={`${label.name}: ${label.displayPercentage} percent`}
           >
-            {item.name}
-          </span>
-          <div className="flex items-baseline gap-1.5 mt-0.5">
-            <span className="text-[15px] font-semibold text-primary tracking-tight leading-none">
-              {Math.round(item.percentage)}%
-            </span>
-            <span 
-              className="text-[12px] font-medium transition-colors duration-300 whitespace-nowrap" 
-              style={{ color: isHovered ? item.color : 'var(--color-muted)' }}
-            >
-              {item.completed} / {item.total}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  };
+            <path
+              d={`M ${anchorX} ${anchorY} L ${label.elbowX} ${label.labelY} L ${label.lineEndX} ${label.labelY}`}
+              fill="none"
+              stroke="var(--color-secondary)"
+              strokeWidth="1.25"
+              opacity="0.3"
+            />
+            <text x={label.textX} y={label.labelY - 7} textAnchor={textAnchor} fill="var(--color-secondary)" className="text-[14px] font-medium">
+              {label.name}
+            </text>
+            <text x={label.textX} y={label.labelY + 14} textAnchor={textAnchor} fill="var(--color-primary)" className="text-[14px] font-bold">
+              {label.displayPercentage}%
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
 
   return (
-    <div 
-      className="w-full h-full bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle relative overflow-hidden"
-      onClick={handleContainerClick}
-    >
-      <h3 className="text-base font-semibold text-primary tracking-wide mb-2 z-10 relative flex-shrink-0">Completion by Agency</h3>
+    <div className="workload-chart-card flex h-full w-full flex-col rounded-[24px] border border-subtle bg-surface p-5 shadow-sm lg:p-6">
+      <h3 className="mb-3 text-base font-semibold tracking-wide text-primary">Agency Workload Distribution</h3>
 
-      <div className="flex-1 w-full flex flex-col lg:flex-row items-center justify-center relative z-10 gap-8 lg:gap-12 lg:pr-8">
-        
-        {/* Left side radial chart */}
-        <div className="w-full lg:w-auto flex items-center justify-center">
-          <div className="relative w-[250px] h-[250px] flex-shrink-0 select-none z-10 pointer-events-none">
-            <svg width="250" height="250" viewBox="0 0 250 250" className="overflow-visible pointer-events-auto">
-              <g transform={`rotate(-90 ${CENTER_X} ${CENTER_Y})`}>
-                {items.map((item, i) => {
-                  const radius = RING_RADII[i];
-                  const circumference = 2 * Math.PI * radius;
-                  const percentage = item.percentage / 100;
-                  // Cap slightly below 1 to prevent SVG dash offset glitches on full circles
-                  const offset = circumference - (Math.min(percentage, 0.9999) * circumference);
-                  
-                  const isHovered = hoveredIdx === i;
-                  const isMuted = hoveredIdx !== null && hoveredIdx !== i;
-                  const strokeW = isHovered ? HOVER_STROKE_WIDTH : STROKE_WIDTH;
-                  
-                  return (
-                    <g 
-                      key={item.name} 
-                      className="transition-all duration-300 cursor-pointer focus:outline-none outline-none"
-                      onMouseEnter={() => setHoveredIdx(i)}
-                      onMouseLeave={() => setHoveredIdx(null)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setHoveredIdx(hoveredIdx === i ? null : i);
-                      }}
-                      onFocus={() => setHoveredIdx(i)}
-                      onBlur={() => setHoveredIdx(null)}
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`${item.name}: ${Math.round(item.percentage)}% completed`}
-                    >
-                      {/* Colored Background Track (Very muted version of its own color) */}
-                      <circle
-                        cx={CENTER_X}
-                        cy={CENTER_Y}
-                        r={radius}
-                        fill="none"
-                        stroke={item.color}
-                        strokeWidth={STROKE_WIDTH}
-                        opacity={0.15}
-                        className="transition-opacity"
-                      />
-                      
-                      {/* Value arc */}
-                      <circle
-                        cx={CENTER_X}
-                        cy={CENTER_Y}
-                        r={radius}
-                        fill="none"
-                        stroke={item.color}
-                        strokeWidth={strokeW}
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={offset}
-                        opacity={isMuted ? 0.3 : 1}
-                        style={{ filter: isMuted ? 'none' : item.glow }}
-                        className="transition-all duration-300 ease-out origin-center"
-                      />
-                      
-                      {/* Invisible thicker hover hit area */}
-                      <circle
-                        cx={CENTER_X}
-                        cy={CENTER_Y}
-                        r={radius}
-                        fill="none"
-                        stroke="transparent"
-                        strokeWidth={24}
-                      />
-                    </g>
-                  );
-                })}
-              </g>
-            </svg>
-            
-            {/* Center Text */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center transition-opacity duration-300">
-              <span className="text-[36px] font-semibold text-primary tracking-tight drop-shadow-sm leading-none transform translate-x-[4px]">
-                {centerValue}%
-              </span>
-              <span className="text-[12px] font-medium text-muted uppercase mt-1 tracking-wider">
-                TOTAL
-              </span>
-            </div>
-          </div>
+      <div className="workload-chart-external hidden lg:flex flex-1 items-center justify-center min-h-0">
+        {renderDonut(true)}
+      </div>
+
+      <div className="workload-chart-fallback flex flex-1 flex-col items-center justify-center lg:hidden min-h-0">
+        <div className="mb-6 mt-2 flex items-center justify-center">
+          {renderDonut(false)}
         </div>
-
-        {/* Right side labels */}
-        <div className="w-full lg:w-auto flex flex-col justify-center gap-4 z-20">
-          {items.map((item, i) => renderLegendBlock(item, i))}
+        <div className="grid w-full max-w-[280px] grid-cols-2 gap-x-4 gap-y-3">
+          {chartLabels.map((label) => (
+            <div
+              key={label.name}
+              className={cn(
+                "flex items-center gap-2 transition-opacity duration-150",
+                hoveredAgency && hoveredAgency !== label.name && "opacity-40"
+              )}
+              onMouseEnter={() => setHoveredAgency(label.name)}
+              onMouseLeave={() => setHoveredAgency(null)}
+            >
+              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: label.color }} />
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-primary">{label.name}</span>
+                <span className="text-xs text-secondary">{label.displayPercentage}%</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

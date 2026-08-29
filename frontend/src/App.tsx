@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { OverviewDashboard } from "./features/overview/OverviewDashboard";
 import { ActivitiesPage } from "./features/activities/ActivitiesPage";
-import { LayoutDashboard, ListTodo, Moon, Sun, RefreshCw, AlertCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, ListTodo, Moon, Sun, RefreshCw, AlertCircle, LogOut, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { cn } from "./lib/utils";
 import { useActivitiesData } from "./hooks/useActivitiesData";
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { AuthGate } from './features/auth/AuthGate';
 
 type View = "overview" | "activities";
+const SIDEBAR_COLLAPSED_KEY = "programme-monitor-sidebar-collapsed";
 
 function formatRefreshedAt(isoString: string | null) {
   if (!isoString) return "Not yet refreshed";
@@ -37,18 +38,73 @@ function formatRefreshedAt(isoString: string | null) {
   return `Last refreshed ${formatted} IST`;
 }
 
+function UserAvatar({ photoUrl, name }: { photoUrl: string | null | undefined; name: string }) {
+  const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
+
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "U";
+
+  return (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-subtle bg-elevated text-xs font-semibold text-secondary">
+      {photoUrl && failedPhotoUrl !== photoUrl ? (
+        <img src={photoUrl} alt="" className="h-full w-full object-cover" onError={() => setFailedPhotoUrl(photoUrl)} />
+      ) : (
+        initials
+      )}
+    </div>
+  );
+}
+
 function AppContent() {
   const { user, logOut } = useAuth();
   const [isDark, setIsDark] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [showSidebarLabels, setShowSidebarLabels] = useState(() => !isSidebarCollapsed);
+  const sidebarTransitionTimerRef = useRef<number | null>(null);
   const [activeView, setActiveView] = useState<View>("overview");
   const [initialFilters, setInitialFilters] = useState<{ timelineStatus?: string[] } | null>(null);
   const { activities, isLoading, error, refresh, refreshedAt } = useActivitiesData(logOut);
+  const email = user?.email ?? "";
+  const displayName = user?.displayName?.trim() || email.split("@")[0] || "User";
+  const sidebarLabelClass = showSidebarLabels
+    ? ""
+    : "md:hidden";
 
   const handleNavigateToActivities = (filters?: { timelineStatus?: string[] }) => {
     if (filters) {
       setInitialFilters(filters);
     }
     setActiveView("activities");
+  };
+
+  const handleSidebarToggle = () => {
+    if (sidebarTransitionTimerRef.current !== null) {
+      window.clearTimeout(sidebarTransitionTimerRef.current);
+      sidebarTransitionTimerRef.current = null;
+    }
+
+    if (isSidebarCollapsed) {
+      setIsSidebarCollapsed(false);
+      sidebarTransitionTimerRef.current = window.setTimeout(() => {
+        setShowSidebarLabels(true);
+        sidebarTransitionTimerRef.current = null;
+      }, 150);
+      return;
+    }
+
+    setShowSidebarLabels(false);
+    setIsSidebarCollapsed(true);
   };
 
   useEffect(() => {
@@ -59,15 +115,37 @@ function AppContent() {
     }
   }, [isDark]);
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isSidebarCollapsed));
+    } catch {
+      // Sidebar state persistence is an enhancement; continue if storage is unavailable.
+    }
+  }, [isSidebarCollapsed]);
+
+  useEffect(() => () => {
+    if (sidebarTransitionTimerRef.current !== null) {
+      window.clearTimeout(sidebarTransitionTimerRef.current);
+    }
+  }, []);
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen w-full bg-canvas text-primary">
       {/* Sidebar / Mobile Header */}
-      <aside className="w-full md:w-[240px] flex-shrink-0 flex flex-col md:border-r border-b md:border-b-0 border-subtle bg-canvas px-4 py-4 md:py-6">
-        <div className="flex items-center justify-between md:justify-start px-2 mb-4 md:mb-10">
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-brand shadow-sm shadow-brand/20"></div>
-            <span className="font-semibold tracking-wide text-sm text-primary">Programme Monitor</span>
-          </div>
+      <aside className={cn(
+        "flex w-full flex-shrink-0 flex-col border-b border-subtle bg-canvas px-4 py-4 transition-[width] duration-150 ease-out motion-reduce:transition-none md:border-r md:border-b-0 md:py-6",
+        isSidebarCollapsed ? "md:w-[80px] md:px-3" : "md:w-[240px]"
+      )}>
+        <div className={cn("mb-4 flex h-11 items-center justify-end md:mb-10", !showSidebarLabels && "md:justify-center")}>
+          <button
+            type="button"
+            onClick={handleSidebarToggle}
+            className="hidden h-11 w-11 items-center justify-center rounded-lg text-secondary transition-colors hover:bg-surface hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none md:flex"
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isSidebarCollapsed ? <ChevronsRight size={20} /> : <ChevronsLeft size={20} />}
+          </button>
           <div className="flex items-center gap-2 md:hidden">
             <span className="text-xs text-muted opacity-60 leading-tight text-right hidden sm:block">
               {formatRefreshedAt(refreshedAt)}
@@ -100,73 +178,94 @@ function AppContent() {
           </div>
         </div>
 
-        <nav className="flex flex-row md:flex-col gap-2 md:gap-1 flex-1 overflow-x-auto md:overflow-visible pb-1 md:pb-0 scrollbar-hide">
-          <button 
+        <nav className={cn("flex flex-1 flex-row gap-2 overflow-x-auto pb-1 scrollbar-hide md:flex-col md:gap-1 md:overflow-visible md:pb-0", !showSidebarLabels && "md:items-center")}>
+          <button
             type="button" 
             onClick={() => setActiveView("overview")}
             className={cn(
-              "flex items-center gap-2 md:gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              "flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none md:gap-3",
+              !showSidebarLabels && "md:h-11 md:w-11 md:justify-center md:px-0",
               activeView === "overview" 
                 ? "bg-surface text-primary shadow-sm border border-subtle" 
                 : "text-secondary hover:text-primary hover:bg-surface/50 border border-transparent"
             )}
+            aria-label="Overview"
+            title={!showSidebarLabels ? "Overview" : undefined}
           >
-            <LayoutDashboard size={16} className={activeView === "overview" ? "text-brand" : "text-muted"} />
-            Overview
+            <LayoutDashboard size={showSidebarLabels ? 16 : 20} className={activeView === "overview" ? "text-brand" : "text-secondary"} />
+            <span className={sidebarLabelClass}>Overview</span>
           </button>
-          <button 
+          <button
             type="button" 
             onClick={() => handleNavigateToActivities({ timelineStatus: [] })}
             className={cn(
-              "flex items-center gap-2 md:gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              "flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none md:gap-3",
+              !showSidebarLabels && "md:h-11 md:w-11 md:justify-center md:px-0",
               activeView === "activities" 
                 ? "bg-surface text-primary shadow-sm border border-subtle" 
                 : "text-secondary hover:text-primary hover:bg-surface/50 border border-transparent"
             )}
+            aria-label="Activities"
+            title={!showSidebarLabels ? "Activities" : undefined}
           >
-            <ListTodo size={16} className={activeView === "activities" ? "text-brand" : "text-muted"} />
-            Activities
+            <ListTodo size={showSidebarLabels ? 16 : 20} className={activeView === "activities" ? "text-brand" : "text-secondary"} />
+            <span className={sidebarLabelClass}>Activities</span>
           </button>
         </nav>
 
-        <div className="hidden md:flex flex-col gap-1 mt-auto">
-          <div className="flex flex-col gap-1 mb-2">
-            <button 
-              type="button"
-              onClick={() => refresh(true)}
-              disabled={isLoading}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-secondary hover:text-primary hover:bg-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <RefreshCw size={16} className={cn("text-muted", isLoading && "animate-spin")} />
-              Sync Data
-            </button>
-            <span className="text-xs text-muted px-3 leading-tight opacity-60">
-              {formatRefreshedAt(refreshedAt)}
+        <div className={cn("mt-auto hidden flex-col gap-1 md:flex", !showSidebarLabels && "md:items-center")}>
+          <button
+            type="button"
+            onClick={() => refresh(true)}
+            disabled={isLoading}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-surface/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none",
+              !showSidebarLabels && "md:h-11 md:w-11 md:justify-center md:px-0 md:py-0"
+            )}
+            aria-label="Sync data"
+            title={!showSidebarLabels ? formatRefreshedAt(refreshedAt) : undefined}
+          >
+            <RefreshCw size={showSidebarLabels ? 16 : 20} className={cn("shrink-0", showSidebarLabels ? "text-muted" : "text-secondary", isLoading && "animate-spin")} />
+            <span className={cn("flex min-w-0 flex-col gap-0.5", sidebarLabelClass)}>
+              <span className="text-sm font-medium text-secondary">Sync Data</span>
+              <span className="truncate text-xs text-muted">{formatRefreshedAt(refreshedAt)}</span>
             </span>
-          </div>
+          </button>
           <button 
             type="button"
             onClick={() => setIsDark(!isDark)}
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-secondary hover:text-primary hover:bg-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-secondary transition-colors duration-150 hover:bg-surface/50 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none",
+              !showSidebarLabels && "md:h-11 md:w-11 md:justify-center md:px-0"
+            )}
+            aria-label={isDark ? "Use light mode" : "Use dark mode"}
+            title={!showSidebarLabels ? (isDark ? "Light Mode" : "Dark Mode") : undefined}
           >
-            {isDark ? <Sun size={16} className="text-muted" /> : <Moon size={16} className="text-muted" />}
-            {isDark ? 'Light Mode' : 'Dark Mode'}
+            {isDark ? <Sun size={showSidebarLabels ? 16 : 20} className={cn("shrink-0", showSidebarLabels ? "text-muted" : "text-secondary")} /> : <Moon size={showSidebarLabels ? 16 : 20} className={cn("shrink-0", showSidebarLabels ? "text-muted" : "text-secondary")} />}
+            <span className={sidebarLabelClass}>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
 
-          <div className="mt-4 pt-4 border-t border-subtle">
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-xs text-muted truncate max-w-[130px]" title={user?.email || 'User'}>
-                {user?.email || 'User'}
-              </span>
-              <button
-                type="button"
-                onClick={logOut}
-                className="text-secondary hover:text-danger transition-colors focus:outline-none"
-                aria-label="Sign out"
-              >
-                <LogOut size={14} />
-              </button>
+          <div className={cn("mt-4 border-t border-subtle pt-4", !showSidebarLabels && "md:flex md:flex-col md:items-center")}>
+            <div className={cn("flex items-center gap-3 rounded-lg px-3 py-2", !showSidebarLabels && "md:px-0")} title={email || displayName}>
+              <UserAvatar photoUrl={user?.photoURL} name={displayName} />
+              <div className={cn("min-w-0 flex-1", sidebarLabelClass)}>
+                <p className="truncate text-sm font-medium text-primary" title={displayName}>{displayName}</p>
+                <p className="truncate text-xs text-muted" title={email || displayName}>{email || "No email available"}</p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={logOut}
+              className={cn(
+                "mt-1 flex w-full items-center justify-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-secondary transition-colors duration-150 hover:bg-surface/50 hover:text-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-danger motion-reduce:transition-none",
+                !showSidebarLabels && "md:mt-2 md:h-11 md:w-11 md:px-0"
+              )}
+              aria-label="Sign out"
+              title={!showSidebarLabels ? "Sign out" : undefined}
+            >
+              <LogOut size={showSidebarLabels ? 16 : 20} className="shrink-0" />
+              <span className={sidebarLabelClass}>Sign out</span>
+            </button>
           </div>
         </div>
       </aside>

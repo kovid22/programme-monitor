@@ -31,6 +31,8 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
 
   if (!activity) return null;
 
+  const remarks = activity.remarks?.trim();
+
   return (
     <>
       <div 
@@ -71,11 +73,11 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
           <div className="h-px w-full bg-subtle" />
 
           {/* Properties Grid */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-7">
             <div className="flex gap-4 items-start">
               <Briefcase size={18} className="text-muted mt-0.5 shrink-0" />
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Component</span>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Component</span>
                 <span className="text-sm font-medium text-primary">{activity.component}</span>
                 <span className="text-xs text-secondary mt-1">Sub-Component: {activity.subComponent}</span>
               </div>
@@ -83,8 +85,8 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
 
             <div className="flex gap-4 items-start">
               <User size={18} className="text-muted mt-0.5 shrink-0" />
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Agency / Responsible</span>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Agency / Responsible</span>
                 <span className="text-sm font-medium text-primary">{activity.agency}</span>
                 {activity.subAgency && (
                   <span className="text-xs text-secondary mt-1">Sub Agency: {activity.subAgency}</span>
@@ -94,16 +96,16 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
 
             <div className="flex gap-4 items-start">
               <Calendar size={18} className="text-muted mt-0.5 shrink-0" />
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Target / Timing</span>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Target / Timing</span>
                 <span className="text-sm font-medium text-primary">{activity.targetTiming || 'Not Specified'}</span>
               </div>
             </div>
 
             <div className="flex gap-4 items-start">
               <IndianRupee size={18} className="text-muted mt-0.5 shrink-0" />
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Estimated Value</span>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Estimated Value</span>
                 <span className="text-sm font-medium text-primary">
                   {activity.estValue !== null ? formatCurrencyValue(activity.estValue) : activity.estimatedValueRaw || 'Not Specified'}
                 </span>
@@ -113,21 +115,23 @@ export function ActivityDetailDrawer({ activity, onClose }: ActivityDetailDrawer
             {activity.pmcResourceAligned && (
               <div className="flex gap-4 items-start">
                 <Briefcase size={18} className="text-muted mt-0.5 shrink-0" />
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">PMC Resource Aligned</span>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">PMC Resource Aligned</span>
                   <span className="text-sm font-medium text-primary">{activity.pmcResourceAligned}</span>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="h-px w-full bg-subtle" />
-          
-          <div className="p-4 bg-surface rounded-xl border border-subtle">
-            <p className="text-sm text-secondary italic text-center">
-              Detailed descriptions and edit controls will be available in a future release.
-            </p>
-          </div>
+          {remarks && (
+            <>
+              <div className="h-px w-full bg-subtle" />
+              <div className="rounded-xl border border-subtle bg-surface p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Remarks</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-secondary">{remarks}</p>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>

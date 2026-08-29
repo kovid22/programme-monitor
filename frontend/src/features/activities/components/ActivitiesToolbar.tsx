@@ -217,7 +217,7 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
                           >
                             <span className="truncate pr-2">{cat.label}</span>
                             {cat.current.length > 0 && (
-                              <span className="bg-brand/10 text-brand text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 leading-none">
+                              <span className="shrink-0 rounded-full bg-brand/10 px-1.5 py-0.5 text-xs font-bold leading-none text-brand">
                                 {cat.current.length}
                               </span>
                             )}

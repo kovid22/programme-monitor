@@ -85,9 +85,9 @@ export function FilterBar({ filters }: FilterBarProps) {
       <div className="flex flex-col md:flex-row items-end justify-between gap-4">
         
         {/* Results Count & Filter Toggle Container */}
-        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+        <div className="flex w-full items-center justify-between gap-3 md:w-auto md:justify-end md:gap-2.5">
           
-          <div className="text-[13px] font-medium text-secondary">
+          <div className="whitespace-nowrap text-[13px] font-medium text-secondary">
             Showing {filters.filteredCount} of {filters.totalCount} activities
           </div>
 
@@ -132,7 +132,7 @@ export function FilterBar({ filters }: FilterBarProps) {
                         >
                           <span className="truncate pr-2">{cat.label}</span>
                           {cat.current.length > 0 && (
-                            <span className="bg-brand/10 text-brand text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 leading-none">
+                            <span className="shrink-0 rounded-full bg-brand/10 px-1.5 py-0.5 text-xs font-bold leading-none text-brand">
                               {cat.current.length}
                             </span>
                           )}

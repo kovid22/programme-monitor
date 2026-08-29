@@ -145,7 +145,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
   }
 
   return (
-    <div className="w-full h-full min-h-[240px] bg-surface rounded-[20px] p-4 lg:p-5 flex flex-col relative overflow-hidden shadow-sm border border-subtle">
+    <div className="w-full h-full min-h-[240px] bg-surface rounded-[20px] p-5 lg:p-6 flex flex-col relative overflow-hidden shadow-sm border border-subtle">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4 z-10">
@@ -193,7 +193,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
               
               <div className="grid grid-cols-7 gap-1 mb-1.5">
                 {weekdays.map((day, i) => (
-                  <div key={i} className={`text-center text-[11px] font-semibold tracking-wider uppercase ${i === 6 ? 'text-red-600 dark:text-red-500' : 'text-primary dark:text-white'}`}>
+                  <div key={i} className={`text-center text-xs font-semibold tracking-wider uppercase ${i === 6 ? 'text-red-600 dark:text-red-500' : 'text-primary dark:text-white'}`}>
                     {day}
                   </div>
                 ))}
@@ -240,7 +240,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                         }}
                         onBlur={() => setHoveredDate(null)}
                       >
-                        <span className="text-[11px] font-medium leading-none">
+                        <span className="text-xs font-medium leading-none">
                           {dayObj.dayNum}
                         </span>
                         {data.total > 1 && (
@@ -264,7 +264,7 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                         !isToday && "text-secondary/50 dark:text-white/60"
                       )}
                     >
-                      <span className="text-[11px] font-medium leading-none">
+                      <span className="text-xs font-medium leading-none">
                         {dayObj.dayNum}
                       </span>
                     </div>
@@ -343,12 +343,12 @@ export function DeliveryCalendar({ activities }: DeliveryCalendarProps) {
                         {activity.title}
                       </p>
                       {activity.agency && (
-                        <p className="mt-0.5 truncate text-[11px] text-muted" title={activity.agency}>
+                        <p className="mt-1 truncate text-xs text-muted" title={activity.agency}>
                           {activity.agency}
                         </p>
                       )}
                     </div>
-                    <span className={cn("shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none text-center", status.className)}>
+                    <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium leading-none text-center", status.className)}>
                       {status.label}
                     </span>
                   </div>

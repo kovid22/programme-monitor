@@ -180,3 +180,25 @@ body {
   color: var(--color-primary);
   font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
+
+.workload-chart-card {
+  container-type: inline-size;
+}
+
+.workload-chart-external {
+  display: none;
+}
+
+.workload-chart-fallback {
+  display: flex;
+}
+
+@container (min-width: 360px) {
+  .workload-chart-external {
+    display: flex;
+  }
+
+  .workload-chart-fallback {
+    display: none;
+  }
+}

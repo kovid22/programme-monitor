@@ -70,7 +70,7 @@ export function StatusBadge({ status, className }: { status: TimelineStatus | Co
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2 py-0.5 text-[10px] font-semibold leading-none",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold leading-none",
         pillClass,
         className
       )}
