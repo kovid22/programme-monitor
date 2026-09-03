@@ -74,6 +74,16 @@ function AppContent() {
   const sidebarTransitionTimerRef = useRef<number | null>(null);
   const [activeView, setActiveView] = useState<View>("overview");
   const [initialFilters, setInitialFilters] = useState<{ timelineStatus?: string[] } | null>(null);
+  const mainScrollRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTo(0, 0);
+    }
+    // Also scroll the window itself just in case it's on mobile where md:overflow-y-auto isn't applied
+    window.scrollTo(0, 0);
+  }, [activeView]);
+
   const { activities, isLoading, error, refresh, refreshedAt } = useActivitiesData(logOut);
   const email = user?.email ?? "";
   const displayName = user?.displayName?.trim() || email.split("@")[0] || "User";
@@ -271,7 +281,7 @@ function AppContent() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto">
+      <main ref={mainScrollRef} className="flex-1 flex flex-col min-w-0 md:h-screen md:overflow-y-auto">
         <div className="max-w-[1440px] w-full mx-auto px-4 sm:px-6 md:px-8 pt-6 pb-10 lg:px-12 lg:pt-8 lg:pb-12">
           
           {isLoading && activities.length === 0 ? (

@@ -8,13 +8,13 @@ interface ValueConcentrationProps {
 }
 
 const AGENCIES = ['DoE', 'DoR', 'JSV', 'PWD', 'HPSRLM'] as const;
-const AGENCY_COLORS = [
-  'var(--color-cat-purple)',
-  'var(--color-cat-pink)',
-  'var(--color-cat-amber)',
-  'var(--color-cat-teal)',
-  'var(--color-state-scheduled)',
-] as const;
+const AGENCY_COLOR_MAP: Record<string, string> = {
+  DoE: 'var(--color-cat-purple)',
+  DoR: 'var(--color-cat-pink)',
+  JSV: 'var(--color-cat-amber)',
+  PWD: 'var(--color-cat-teal)',
+  HPSRLM: 'var(--color-state-scheduled)',
+};
 
 const CHART_WIDTH = 420;
 const CHART_HEIGHT = 240;
@@ -63,7 +63,7 @@ export function ValueConcentration({ activities, selectedAgencies }: ValueConcen
       });
     });
 
-    const workloads = agenciesToDisplay.map((agency, colorIndex) => {
+    const workloads = agenciesToDisplay.map((agency) => {
       const count = assignmentCounts.get(agency) ?? 0;
       const exactPercentage = total > 0 ? (count / total) * 100 : 0;
       const floored = Math.floor(exactPercentage);
@@ -76,7 +76,7 @@ export function ValueConcentration({ activities, selectedAgencies }: ValueConcen
         remainder: exactPercentage - floored,
         displayPercentage: floored,
         segmentStart: 0,
-        color: AGENCY_COLORS[colorIndex >= 0 ? colorIndex : 0],
+        color: AGENCY_COLOR_MAP[agency] || 'var(--color-subtle)',
       };
     }).sort((a, b) => b.share - a.share);
 
@@ -240,11 +240,11 @@ export function ValueConcentration({ activities, selectedAgencies }: ValueConcen
     <div className="workload-chart-card flex h-full w-full flex-col rounded-[24px] border border-subtle bg-surface p-5 shadow-sm lg:p-6">
       <h3 className="mb-3 text-base font-semibold tracking-wide text-primary">Agency Workload Distribution</h3>
 
-      <div className="workload-chart-external hidden lg:flex flex-1 items-center justify-center min-h-0">
+      <div className="workload-chart-external flex-1 items-center justify-center min-h-0">
         {renderDonut(true)}
       </div>
 
-      <div className="workload-chart-fallback flex flex-1 flex-col items-center justify-center lg:hidden min-h-0">
+      <div className="workload-chart-fallback flex-1 flex-col items-center justify-center min-h-0">
         <div className="mb-6 mt-2 flex items-center justify-center">
           {renderDonut(false)}
         </div>

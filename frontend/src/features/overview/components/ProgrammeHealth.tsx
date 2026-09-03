@@ -29,7 +29,7 @@ export function ProgrammeHealth({ metrics }: ProgrammeHealthProps) {
           </span>
           <span className="text-xl font-medium text-secondary">%</span>
         </div>
-        <p className="text-xs font-medium text-secondary mt-1">
+        <p className="text-xs font-medium text-secondary mt-2">
           {completedActivities} of {metrics.totalActivities} completed
         </p>
       </div>
@@ -46,7 +46,7 @@ export function ProgrammeHealth({ metrics }: ProgrammeHealthProps) {
           </span>
           <span className="text-xl font-medium text-secondary ml-1">{totalValParts.unit}</span>
         </div>
-        <p className="text-xs font-medium text-secondary mt-1">
+        <p className="text-xs font-medium text-secondary mt-2">
           Total Programme
         </p>
       </div>
@@ -61,7 +61,7 @@ export function ProgrammeHealth({ metrics }: ProgrammeHealthProps) {
             {metrics.dueSoonCount}
           </span>
         </div>
-        <p className="text-xs font-medium text-warning mt-1 flex items-center gap-1.5">
+        <p className="text-xs font-medium text-warning mt-2 flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-warning"></span>
           Upcoming deadlines
         </p>
@@ -77,7 +77,7 @@ export function ProgrammeHealth({ metrics }: ProgrammeHealthProps) {
             {metrics.atRiskActivities.length}
           </span>
         </div>
-        <p className="text-xs font-medium text-danger mt-1 flex items-center gap-1.5">
+        <p className="text-xs font-medium text-danger mt-2 flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-state-risk"></span>
           Immediate / Overdue
         </p>
