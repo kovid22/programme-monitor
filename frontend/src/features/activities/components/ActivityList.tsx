@@ -1,4 +1,5 @@
 import type { Activity } from '../../../data/types';
+import { cn } from '../../../lib/utils';
 import { ActivityRow } from './ActivityRow';
 import { ActivityCard } from './ActivityCard';
 
@@ -30,23 +31,24 @@ export function ActivityList({ activities, onActivityClick, resetFilters, hasAct
     );
   }
 
+  const gridColsClass = "grid-cols-[minmax(0,5.5fr)_minmax(0,2fr)_minmax(0,9fr)_minmax(0,1.7fr)_minmax(0,1.3fr)_minmax(0,2.2fr)]";
+
   return (
-    <div className="w-full bg-canvas border border-subtle md:rounded-2xl overflow-hidden shadow-sm shadow-black/5 -mx-4 md:mx-0 w-[calc(100%+2rem)] md:w-full">
+    <div className="w-full bg-canvas border border-subtle md:rounded-2xl overflow-hidden shadow-sm shadow-black/5 -mx-4 md:mx-auto w-[calc(100%+2rem)] md:w-full md:max-w-[1360px]">
       {/* Desktop Header */}
-      <div className="hidden md:grid grid-cols-12 gap-4 py-3.5 px-5 bg-surface border-b border-subtle text-xs font-semibold uppercase tracking-wider text-muted sticky top-0 z-10">
-        <div className="col-span-2 pr-2">Component</div>
-        <div className="col-span-2 pr-2">Agency</div>
-        <div className="col-span-3 pr-2">Activity</div>
-        <div className="col-span-2 pr-2">Sub-Component</div>
-        <div className="col-span-1">Target</div>
-        <div className="col-span-1 text-right pr-2">Value</div>
-        <div className="col-span-1 text-right">Status</div>
+      <div className={cn("hidden md:grid gap-3 py-3 px-5 bg-surface border-b border-subtle text-xs font-bold uppercase tracking-wider text-secondary sticky top-0 z-10", gridColsClass)}>
+        <div className="pr-2 min-w-0 truncate">Component</div>
+        <div className="text-center px-2 min-w-0 truncate">Agency</div>
+        <div className="pr-2 min-w-0 truncate">Activity</div>
+        <div className="text-center px-2 min-w-0 truncate">Target</div>
+        <div className="text-center px-2 min-w-0 truncate">Value</div>
+        <div className="text-right min-w-0 truncate">Status</div>
       </div>
 
       {/* Desktop Rows */}
       <div className="hidden md:flex flex-col">
         {activities.map((a, i) => (
-          <ActivityRow key={a.id || `act-${i}`} activity={a} onClick={() => onActivityClick(a)} />
+          <ActivityRow key={a.id || `act-${i}`} activity={a} onClick={() => onActivityClick(a)} gridColsClass={gridColsClass} />
         ))}
       </div>
 

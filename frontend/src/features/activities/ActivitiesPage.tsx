@@ -31,13 +31,10 @@ export function ActivitiesPage({ activities, initialFilters }: ActivitiesPagePro
   };
 
   return (
-    <div className="flex flex-col h-full w-full max-w-[1200px] mx-auto animate-in fade-in duration-300">
+    <div className="flex flex-col h-full w-full max-w-[1440px] mx-auto animate-in fade-in duration-300">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-2">
         <div>
           <h1 className="text-2xl font-bold text-primary tracking-tight">Activities</h1>
-          <p className="text-sm text-secondary mt-1">
-            Showing {filters.filtered.length} of {activities.length} activities
-          </p>
         </div>
       </div>
 

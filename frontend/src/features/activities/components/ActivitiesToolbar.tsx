@@ -11,10 +11,9 @@ interface ActivitiesToolbarProps {
 }
 
 // Helper for popover click outside
-// Helper for popover click outside
 function useOutsideClick(handler: () => void, containerSelector: string) {
   const handlerRef = useRef(handler);
-  
+
   useEffect(() => {
     handlerRef.current = handler;
   }, [handler]);
@@ -41,7 +40,7 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
   const [sortOpen, setSortOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<FilterCategory>('component');
   const [mobileExpanded, setMobileExpanded] = useState<FilterCategory | null>('component');
-  
+
   const filterBtnRef = useRef<HTMLButtonElement>(null);
   const filterPopoverRef = useRef<HTMLDivElement>(null);
   const filterPopoverStyle = usePopoverPosition({
@@ -129,41 +128,43 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
     <div className="flex flex-col gap-4 mb-6 relative">
       {/* Top Bar */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        
-        {/* Search */}
-        <div className="relative w-full md:w-80 shrink-0">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-            <Search size={16} />
-          </div>
-          <input
-            type="text"
-            id="activity-search"
-            name="activity-search"
-            className="w-full bg-surface border border-subtle text-primary text-sm rounded-lg pl-10 pr-4 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent placeholder:text-muted transition-colors"
-            placeholder="Search activities, IDs, agencies..."
-            value={filters.search}
-            onChange={(e) => filters.setSearch(e.target.value)}
-          />
-          {filters.search && (
-            <button
-              onClick={() => filters.setSearch('')}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted hover:text-primary transition-colors focus:outline-none"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
 
-        {/* Desktop Results Count */}
-        <div className="hidden md:block flex-1 px-4">
-          <span className="text-[13px] font-medium text-secondary">
-            {filters.filteredCount} of {filters.totalCount} activities
-          </span>
+        {/* Search & Count Group */}
+        <div className="flex flex-1 w-full md:w-auto items-center gap-4">
+          <div className="relative w-full md:w-80 shrink-0">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
+              <Search size={16} />
+            </div>
+            <input
+              type="text"
+              id="activity-search"
+              name="activity-search"
+              className="w-full bg-surface border border-subtle text-primary text-sm rounded-lg pl-10 pr-4 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent placeholder:text-muted transition-colors"
+              placeholder="Search activities, IDs, agencies..."
+              value={filters.search}
+              onChange={(e) => filters.setSearch(e.target.value)}
+            />
+            {filters.search && (
+              <button
+                onClick={() => filters.setSearch('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted hover:text-primary transition-colors focus:outline-none"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Desktop Results Count */}
+          <div className="hidden md:block shrink-0">
+            <span className="text-[13px] font-medium text-secondary">
+              {filters.filteredCount} of {filters.totalCount} activities
+            </span>
+          </div>
         </div>
 
         {/* Controls */}
         <div className="flex items-center gap-2 w-full md:w-auto shrink-0 justify-between md:justify-end">
-          
+
           {/* Mobile Results Count */}
           <div className="md:hidden">
             <span className="text-[13px] font-medium text-secondary">
@@ -197,7 +198,7 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
                 <>
                   {/* DESKTOP POPOVER (Two-pane) */}
                   {createPortal(
-                    <div 
+                    <div
                       data-filter-container
                       ref={filterPopoverRef}
                       style={filterPopoverStyle}
@@ -260,7 +261,7 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
                         {activeFiltersCount === 0 ? "No filters applied" : `${activeFiltersCount} filter${activeFiltersCount !== 1 ? 's' : ''} applied`}
                       </span>
                       {activeFiltersCount > 0 && (
-                        <button 
+                        <button
                           onClick={() => {
                             filters.setComponent([]);
                             filters.setSubComponent([]);
@@ -268,7 +269,7 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
                             filters.setSubAgency([]);
                             filters.setTimelineStatus([]);
                             filters.setCompletionStatus([]);
-                          }} 
+                          }}
                           className="text-[12px] font-medium text-brand bg-brand/5 hover:bg-brand/10 border border-brand/10 transition-colors px-2.5 py-1 rounded-md"
                         >
                           Clear all
@@ -295,7 +296,7 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
                         </button>
                       )}
                     </div>
-                    
+
                     <div className="overflow-y-auto p-4 flex flex-col gap-3 bg-canvas flex-1 custom-scrollbar">
                       {CATEGORIES.map(cat => {
                         const isExpanded = mobileExpanded === cat.id;
@@ -346,7 +347,7 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
                         );
                       })}
                     </div>
-                    
+
                     <div className="p-4 border-t border-subtle bg-surface shrink-0">
                       <button onClick={() => setFilterOpen(false)} className="w-full py-3 bg-brand hover:bg-brand/90 transition-colors text-white text-[14px] font-medium rounded-lg">
                         Show {filters.filteredCount} results
@@ -389,7 +390,7 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
                     {sortOptions.map(opt => {
                       const isActive = filters.sortBy.startsWith(`${opt.base}_`);
                       const isAsc = filters.sortBy === `${opt.base}_asc`;
-                      
+
                       return (
                         <button
                           key={opt.base}
@@ -428,7 +429,7 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
           {activeChips.map(chip => (
             <div key={chip.id} className="inline-flex items-center gap-1.5 px-2 py-1 bg-surface border border-subtle rounded-md shadow-sm">
               <span className="text-[12px] font-medium text-secondary">{chip.label}</span>
-              <button 
+              <button
                 onClick={chip.onRemove}
                 className="text-secondary hover:text-danger focus:outline-none transition-colors"
                 aria-label={`Remove ${chip.label}`}
@@ -437,7 +438,7 @@ export function ActivitiesToolbar({ filters }: ActivitiesToolbarProps) {
               </button>
             </div>
           ))}
-          <button 
+          <button
             onClick={() => {
               filters.setComponent([]);
               filters.setSubComponent([]);
