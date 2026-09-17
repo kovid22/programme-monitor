@@ -2,6 +2,8 @@ export type TimelineStatus = 'Immediate' | 'Overdue' | 'Due Soon' | 'On Track' |
 export type CompletionStatus = 'Not Started' | 'In Progress' | 'Completed' | 'Delayed';
 
 export interface Activity {
+  uid: string;
+  sourceAgency: 'DoE' | 'PWD' | 'JSV' | 'SRLM';
   id?: string | null;
   component: string;
   subComponent: string;

@@ -5,8 +5,10 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    GOOGLE_SHEET_ID: str = ""
-    GOOGLE_SHEET_RANGE: str = "A3:L"
+    GOOGLE_SHEET_DOE_ID: str = ""
+    GOOGLE_SHEET_PWD_ID: str = ""
+    GOOGLE_SHEET_JSV_ID: str = ""
+    GOOGLE_SHEET_SRLM_ID: str = ""
     GOOGLE_SERVICE_ACCOUNT_JSON: str = ""
     FRONTEND_ORIGIN: str = "http://localhost:5173"
     ENVIRONMENT: str = "development"

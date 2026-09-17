@@ -9,25 +9,11 @@ from googleapiclient.errors import HttpError
 from app.config import settings
 from app.models import Activity
 from app.utils.dates import parse_target_date
+from typing import Literal
 
 logger = logging.getLogger(__name__)
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
-
-EXPECTED_HEADERS = [
-    "no.",
-    "component",
-    "sub-component",
-    "agency / responsible",
-    "sub agency",
-    "action / activity",
-    "est. value (inr lakh)",
-    "target / timing",
-    "timeline status",
-    "completion status",
-    "pmc resource aligned",
-    "remarks",
-]
 
 TIMELINE_STATUSES = frozenset({
     "Overdue",
@@ -37,14 +23,11 @@ TIMELINE_STATUSES = frozenset({
     "To Be Confirmed",
 })
 
-
 class ProgrammeDataSourceError(Exception):
     """Raised when Google Sheets cannot provide programme data."""
 
-
 class ProgrammeDataConfigurationError(ValueError):
     """Raised when programme data configuration or schema is invalid."""
-
 
 def get_sheets_service():
     info = settings.service_account_info
@@ -62,29 +45,6 @@ def get_sheets_service():
         raise ProgrammeDataConfigurationError(
             "Unable to initialize Google Sheets credentials."
         ) from exc
-
-def parse_estimated_value(val: str) -> Optional[float]:
-    if not val:
-        return None
-    val = str(val).strip().replace(',', '')
-    try:
-        return float(val)
-    except ValueError:
-        return None
-
-
-def parse_agencies(value: str) -> list[str]:
-    """Return unique, trimmed agency values while preserving display casing."""
-    agencies: list[str] = []
-    seen: set[str] = set()
-    for agency in value.split(","):
-        normalized = agency.strip()
-        key = normalized.lower()
-        if normalized and key not in seen:
-            agencies.append(normalized)
-            seen.add(key)
-    return agencies
-
 
 def normalize_timeline_status(value: str) -> str:
     """Validate the sheet-owned Timeline Status value."""
@@ -122,94 +82,129 @@ class ActivityCache:
 _cache = ActivityCache(180)
 
 def _fetch_from_google_sheets() -> List[Activity]:
-    if not settings.GOOGLE_SHEET_ID:
-        raise ProgrammeDataConfigurationError("GOOGLE_SHEET_ID is not configured.")
-        
+    sources = [
+        ("DoE", settings.GOOGLE_SHEET_DOE_ID, "'DOE'!A1:Z"),
+        ("PWD", settings.GOOGLE_SHEET_PWD_ID, "'PWD'!A1:Z"),
+        ("JSV", settings.GOOGLE_SHEET_JSV_ID, "'JSV'!A1:Z"),
+        ("SRLM", settings.GOOGLE_SHEET_SRLM_ID, "'SRLM'!A1:Z"),
+    ]
+
+    for agency, sheet_id, _ in sources:
+        if not sheet_id:
+            raise ProgrammeDataConfigurationError(f"GOOGLE_SHEET_{agency.upper()}_ID is not configured.")
+
     try:
         service = get_sheets_service()
-        sheet = service.spreadsheets()
-        result = sheet.values().get(
-            spreadsheetId=settings.GOOGLE_SHEET_ID,
-            range=settings.GOOGLE_SHEET_RANGE
-        ).execute()
-        
-        values = result.get('values', [])
     except ProgrammeDataConfigurationError:
         raise
-    except HttpError as exc:
-        logger.error("Google Sheets API request failed.")
-        raise ProgrammeDataSourceError(
-            "Failed to fetch data from Google Sheets API."
-        ) from exc
     except Exception as exc:
         logger.error("Google Sheets client request failed.")
         raise ProgrammeDataSourceError(
             "Failed to initialize Google Sheets client."
         ) from exc
-        
-    if not values:
-        return []
-        
-    headers = [str(header).strip().lower() for header in values[0][:12]]
-    if headers != EXPECTED_HEADERS:
-        raise ProgrammeDataConfigurationError(
-            "Programme data headers do not match the expected A:L schema."
-        )
 
-    activities: List[Activity] = []
-    
-    for row in values[1:]:
-        if not any(str(cell).strip() for cell in row):
-            continue
-            
-        def get_val(index: int) -> str:
-            if index >= len(row):
-                return ""
-            return str(row[index]).strip()
-            
-        component = get_val(1)
-        activity_title = get_val(5)
-        
-        if not component or not activity_title:
-            logger.warning("Skipping programme row with required fields missing.")
-            continue
-            
-        id_val = get_val(0)
-        target_timing = get_val(7)
-        parsed_target_date = parse_target_date(target_timing)
-        
+    all_activities: List[Activity] = []
+
+    for agency, sheet_id, range_name in sources:
         try:
-            completion_status = normalize_completion_status(get_val(9))
-        except ValueError:
-            logger.warning("Skipping programme row with invalid completion status.")
-            continue
-            
-        try:
-            timeline_status = normalize_timeline_status(get_val(8))
-        except ValueError:
-            logger.warning("Skipping programme row with invalid timeline status.")
-            continue
-        estimated_value_raw = get_val(6)
-        
-        activities.append(Activity(
-            id=id_val if id_val else None,
-            component=component,
-            subComponent=get_val(2),
-            agency=get_val(3),
-            agencies=parse_agencies(get_val(3)),
-            subAgency=get_val(4) or None,
-            title=activity_title,
-            estimatedValue=parse_estimated_value(estimated_value_raw),
-            estimatedValueRaw=estimated_value_raw,
-            targetTiming=target_timing,
-            targetDate=parsed_target_date,
-            timelineStatus=timeline_status,  # type: ignore[arg-type]
-            completionStatus=completion_status,  # type: ignore[arg-type]
-            pmcResourceAligned=get_val(10) or None,
-            remarks=get_val(11) or None,
-        ))
-        
-    return activities
+            sheet = service.spreadsheets()
+            result = sheet.values().get(
+                spreadsheetId=sheet_id,
+                range=range_name
+            ).execute()
+            values = result.get('values', [])
+        except HttpError as exc:
+            logger.error(f"Google Sheets API request failed for {agency}.")
+            raise ProgrammeDataSourceError(
+                f"Failed to fetch data from Google Sheets API for {agency}."
+            ) from exc
+
+        if not values:
+            raise ProgrammeDataConfigurationError(f"Source {agency} is completely empty (missing header row).")
+
+        headers = [str(header).strip().lower() for header in values[0]]
+
+        required = [
+            "no.",
+            "component",
+            "sub-component",
+            "action / activity",
+            "target / timing",
+            "timeline status",
+            "pmc resource aligned",
+            "completion status",
+            "remarks"
+        ]
+
+        header_indices = {}
+        for req in required:
+            if req not in headers:
+                raise ProgrammeDataConfigurationError(f"Missing required header: {req} in source {agency}")
+            header_indices[req] = headers.index(req)
+
+        sub_agency_idx = headers.index("sub agency") if "sub agency" in headers else None
+
+        for row_num, row in enumerate(values[1:], start=2):
+            if not any(str(cell).strip() for cell in row):
+                continue
+
+            def get_val(key: str) -> str:
+                idx = header_indices[key]
+                if idx >= len(row):
+                    return ""
+                return str(row[idx]).strip()
+
+            component = get_val("component")
+            activity_title = get_val("action / activity")
+
+            if not component or not activity_title:
+                logger.warning(f"Skipping row {row_num} in {agency} with required fields missing.")
+                continue
+
+            id_val = get_val("no.")
+            uid = f"{agency}:{id_val}" if id_val else f"{agency}:row-{row_num}"
+
+            target_timing = get_val("target / timing")
+            parsed_target_date = parse_target_date(target_timing)
+
+            try:
+                completion_status = normalize_completion_status(get_val("completion status"))
+            except ValueError:
+                logger.warning(f"Skipping row {row_num} in {agency} with invalid completion status.")
+                continue
+
+            try:
+                timeline_status = normalize_timeline_status(get_val("timeline status"))
+            except ValueError:
+                logger.warning(f"Skipping row {row_num} in {agency} with invalid timeline status.")
+                continue
+
+            if sub_agency_idx is not None and sub_agency_idx < len(row):
+                sub_agency = str(row[sub_agency_idx]).strip() or None
+            else:
+                sub_agency = None
+
+            all_activities.append(Activity(
+                uid=uid,
+                sourceAgency=agency,  # type: ignore[arg-type]
+                id=id_val if id_val else None,
+                component=component,
+                subComponent=get_val("sub-component"),
+                agency=agency,
+                agencies=[agency],
+                subAgency=sub_agency,
+                title=activity_title,
+                estimatedValue=None,
+                estimatedValueRaw="",
+                targetTiming=target_timing,
+                targetDate=parsed_target_date,
+                timelineStatus=timeline_status,  # type: ignore[arg-type]
+                completionStatus=completion_status,  # type: ignore[arg-type]
+                pmcResourceAligned=get_val("pmc resource aligned") or None,
+                remarks=get_val("remarks") or None,
+            ))
+
+    return all_activities
 
 def fetch_activities_with_timestamp(force_refresh: bool = False) -> tuple[List[Activity], Optional[str]]:
     if not force_refresh:

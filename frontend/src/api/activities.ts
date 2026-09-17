@@ -2,6 +2,8 @@ import type { Activity, TimelineStatus, CompletionStatus } from '../data/types';
 import { getAuthToken } from '../lib/firebase';
 
 export interface BackendActivity {
+  uid: string;
+  sourceAgency: 'DoE' | 'PWD' | 'JSV' | 'SRLM';
   id: string | null;
   component: string;
   subComponent: string;
@@ -101,6 +103,8 @@ export async function fetchActivities(forceRefresh: boolean = false): Promise<Fe
   const data: ActivitiesResponse = await response.json();
   
   const mappedActivities = data.activities.map(act => ({
+    uid: act.uid,
+    sourceAgency: act.sourceAgency,
     id: act.id,
     component: act.component,
     subComponent: act.subComponent,

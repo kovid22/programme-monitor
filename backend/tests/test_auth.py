@@ -562,6 +562,8 @@ def test_activities_serialization_preserves_target_timing(client):
     from app.models import Activity
 
     activity = Activity(
+        uid="DoE:1",
+        sourceAgency="DoE",
         id="1",
         component="Component A",
         subComponent="Sub-Component A",

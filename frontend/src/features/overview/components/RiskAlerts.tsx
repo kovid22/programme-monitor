@@ -12,7 +12,7 @@ export function RiskAlerts({ activities, onNavigateToActivities, onOpenActivity 
   return (
     <div className="w-full h-full min-h-[280px] bg-surface rounded-[24px] p-5 lg:p-6 flex flex-col shadow-sm border border-subtle">
       <h3 className="mb-3 text-base font-semibold tracking-wide text-primary">Tasks Pending</h3>
-      
+
       {activities.length === 0 ? (
         <div className="flex flex-1 items-center justify-center text-sm text-muted italic">
           No activities currently at risk.
@@ -22,9 +22,9 @@ export function RiskAlerts({ activities, onNavigateToActivities, onOpenActivity 
           {activities.slice(0, 4).map(activity => {
             const isRed = activity.timelineStatus === 'Overdue' || activity.timelineStatus === 'Immediate';
             return (
-              <button 
+              <button
                 type="button"
-                key={activity.id} 
+                key={activity.uid}
                 onClick={() => onOpenActivity?.(activity)}
                 className="-mx-2 flex w-full items-center justify-between gap-3 rounded-lg border-b border-subtle/50 px-2 py-3 text-left transition-colors hover:bg-elevated last:border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
               >
@@ -55,11 +55,11 @@ export function RiskAlerts({ activities, onNavigateToActivities, onOpenActivity 
           })}
           {activities.length > 4 && (
             <div className="mt-2 text-center">
-              <button 
+              <button
                 onClick={() => onNavigateToActivities?.({ timelineStatus: ['Overdue', 'Immediate'] })}
                 className="text-xs font-medium text-secondary hover:text-primary transition-colors inline-flex items-center gap-1 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
               >
-                View all {activities.length} at risk 
+                View all {activities.length} at risk
                 <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>

@@ -47,15 +47,15 @@ export function ActivityList({ activities, onActivityClick, resetFilters, hasAct
 
       {/* Desktop Rows */}
       <div className="hidden md:flex flex-col">
-        {activities.map((a, i) => (
-          <ActivityRow key={a.id || `act-${i}`} activity={a} onClick={() => onActivityClick(a)} gridColsClass={gridColsClass} />
+        {activities.map((a) => (
+          <ActivityRow key={a.uid} activity={a} onClick={() => onActivityClick(a)} gridColsClass={gridColsClass} />
         ))}
       </div>
 
       {/* Mobile Cards */}
-      <div className="md:hidden flex flex-col p-4 bg-surface/30">
-        {activities.map((a, i) => (
-          <ActivityCard key={a.id || `act-${i}`} activity={a} onClick={() => onActivityClick(a)} />
+      <div className="md:hidden flex flex-col p-4 bg-surface/30 gap-4">
+        {activities.map((a) => (
+          <ActivityCard key={a.uid} activity={a} onClick={() => onActivityClick(a)} />
         ))}
       </div>
     </div>

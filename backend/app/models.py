@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 
 class Activity(BaseModel):
+    uid: str
+    sourceAgency: Literal["DoE", "PWD", "JSV", "SRLM"]
     id: Optional[str] = None
     component: str
     subComponent: str
