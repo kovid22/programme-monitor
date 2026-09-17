@@ -7,12 +7,12 @@ interface ValueConcentrationProps {
   selectedAgencies: string[];
 }
 
-const AGENCIES = ['DoE', 'DoR', 'JSV', 'PWD', 'HPSRLM'] as const;
 const AGENCY_COLOR_MAP: Record<string, string> = {
   DoE: 'var(--color-cat-purple)',
   DoR: 'var(--color-cat-pink)',
   JSV: 'var(--color-cat-amber)',
   PWD: 'var(--color-cat-teal)',
+  SRLM: 'var(--color-cat-pink)',
   HPSRLM: 'var(--color-state-scheduled)',
 };
 
@@ -48,7 +48,15 @@ export function ValueConcentration({ activities, selectedAgencies }: ValueConcen
   const [hoveredAgency, setHoveredAgency] = useState<string | null>(null);
 
   const { agencyWorkload, isEmpty } = useMemo(() => {
-    const agenciesToDisplay = selectedAgencies.length > 0 ? selectedAgencies : AGENCIES;
+    const agenciesToDisplay: string[] = selectedAgencies.length > 0
+      ? selectedAgencies
+      : Array.from(
+          new Set(
+            activities.flatMap((a) =>
+              a.agencies && a.agencies.length > 0 ? a.agencies : a.agency ? [a.agency] : []
+            )
+          )
+        ).sort();
     const assignmentCounts = new Map(agenciesToDisplay.map((agency) => [agency, 0]));
 
     let total = 0;

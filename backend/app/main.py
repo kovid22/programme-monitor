@@ -51,8 +51,8 @@ def get_activities(
             status_code=503,
             detail="Programme data is temporarily unavailable.",
         )
-    except ValueError:
-        logger.error("Programme data configuration or validation failed.")
+    except ValueError as exc:
+        logger.error("Programme data configuration or validation failed: %s", exc)
         raise HTTPException(status_code=500, detail="Unable to load programme data.")
     except Exception:
         logger.error("Unexpected error while loading programme data.")

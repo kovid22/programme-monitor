@@ -21,7 +21,14 @@ export function ActivityRow({ activity, onClick, gridColsClass }: ActivityRowPro
         gridColsClass
       )}
     >
-      {/* Component & Sub-Component */}
+      {/* Agency — column 1 */}
+      <div className="flex flex-col items-center justify-center px-2 min-w-0">
+        <span className="text-[13px] font-medium text-secondary line-clamp-2 leading-snug text-center" title={agenciesDisplay}>
+          {agenciesDisplay}
+        </span>
+      </div>
+
+      {/* Component & Sub-Component — column 2 */}
       <div className="flex flex-col pr-2 min-w-0">
         <span className="text-[13px] font-medium text-primary truncate" title={activity.component}>
           {activity.component}
@@ -31,14 +38,7 @@ export function ActivityRow({ activity, onClick, gridColsClass }: ActivityRowPro
         </span>
       </div>
 
-      {/* Agency */}
-      <div className="flex flex-col items-center justify-center px-2 min-w-0">
-        <span className="text-[13px] font-medium text-secondary line-clamp-2 leading-snug text-center" title={agenciesDisplay}>
-          {agenciesDisplay}
-        </span>
-      </div>
-
-      {/* Activity Title & ID */}
+      {/* Activity Title & ID — column 3 */}
       <div className="flex items-start gap-1.5 pr-2 min-w-0">
         {activity.id && (
           <span className="text-secondary font-normal shrink-0">{activity.id}.</span>
@@ -50,19 +50,19 @@ export function ActivityRow({ activity, onClick, gridColsClass }: ActivityRowPro
         </div>
       </div>
 
-      {/* Target / Timing */}
+      {/* Target / Timing — column 4 */}
       <div className="flex items-center justify-center px-2 min-w-0">
         <span className="text-[13px] text-secondary truncate text-center" title={targetTiming}>{targetTiming}</span>
       </div>
 
-      {/* Value */}
+      {/* Value — column 5 */}
       <div className="flex justify-center items-center px-2 min-w-0">
         <span className="text-[13px] font-semibold text-primary whitespace-nowrap text-center">
           {activity.estValue !== null && activity.estValue > 0 ? formatCurrencyValue(activity.estValue) : '-'}
         </span>
       </div>
 
-      {/* Statuses */}
+      {/* Statuses — column 6 */}
       <div className="flex flex-col items-end justify-center gap-1.5 min-w-0">
         <StatusBadge status={activity.completionStatus} variant="dot-text" />
         <StatusBadge status={activity.timelineStatus} variant="soft-pill" />

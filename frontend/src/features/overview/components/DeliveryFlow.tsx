@@ -22,8 +22,6 @@ const ORDER = [
   PRESENTATION_STATES.SCHEDULED, 
   PRESENTATION_STATES.TBC
 ];
-const AGENCIES = ["DoE", "DoR", "JSV", "PWD", "HPSRLM"] as const;
-
 export function DeliveryFlow({ activities, selectedAgencies }: DeliveryFlowProps) {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{
@@ -36,7 +34,15 @@ export function DeliveryFlow({ activities, selectedAgencies }: DeliveryFlowProps
   } | null>(null);
 
   const { agencyExposure, maxValue } = useMemo(() => {
-    const agenciesToDisplay = selectedAgencies.length > 0 ? selectedAgencies : AGENCIES;
+    const agenciesToDisplay: string[] = selectedAgencies.length > 0
+      ? selectedAgencies
+      : Array.from(
+          new Set(
+            activities.flatMap((a) =>
+              a.agencies && a.agencies.length > 0 ? a.agencies : a.agency ? [a.agency] : []
+            )
+          )
+        ).sort();
     const numericActivities = activities.filter(
       (activity) => typeof activity.estValue === "number" && Number.isFinite(activity.estValue)
     );

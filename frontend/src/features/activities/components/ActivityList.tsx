@@ -31,14 +31,15 @@ export function ActivityList({ activities, onActivityClick, resetFilters, hasAct
     );
   }
 
-  const gridColsClass = "grid-cols-[minmax(0,5.5fr)_minmax(0,2fr)_minmax(0,9fr)_minmax(0,1.7fr)_minmax(0,1.3fr)_minmax(0,2.2fr)]";
+  // Agency first: compact (1.8fr) | Component (5fr) | Activity (9fr) | Target | Value | Status
+  const gridColsClass = "grid-cols-[minmax(0,1.8fr)_minmax(0,5fr)_minmax(0,9fr)_minmax(0,1.7fr)_minmax(0,1.3fr)_minmax(0,2.2fr)]";
 
   return (
     <div className="w-full bg-canvas border border-subtle md:rounded-2xl overflow-hidden shadow-sm shadow-black/5 -mx-4 md:mx-auto w-[calc(100%+2rem)] md:w-full md:max-w-[1360px]">
       {/* Desktop Header */}
       <div className={cn("hidden md:grid gap-3 py-3 px-5 bg-surface border-b border-subtle text-xs font-bold uppercase tracking-wider text-secondary sticky top-0 z-10", gridColsClass)}>
-        <div className="pr-2 min-w-0 truncate">Component</div>
         <div className="text-center px-2 min-w-0 truncate">Agency</div>
+        <div className="pr-2 min-w-0 truncate">Component</div>
         <div className="pr-2 min-w-0 truncate">Activity</div>
         <div className="text-center px-2 min-w-0 truncate">Target</div>
         <div className="text-center px-2 min-w-0 truncate">Value</div>
